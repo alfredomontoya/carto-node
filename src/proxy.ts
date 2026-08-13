@@ -1,9 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { SESSION_COOKIE } from '@/server/auth/dal'
+import { repos } from '@/server/repo/drizzle'
+import { AuthService } from '@/server/services/auth.service'
 
 const rutasProtegidas = ['/dashboard', '/areas', '/usuarios', '/documentos', '/contadores']
 
-export function proxy(request: NextRequest) {
+const auth = new AuthService(repos)
+
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const token = request.cookies.get(SESSION_COOKIE)?.value
   const autenticado = Boolean(token)
@@ -15,8 +19,18 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (pathname === '/login' && autenticado) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  // Solo redirige a /dashboard si la sesión realmente existe en la base.
+  // Evita un bucle /dashboard <-> /login cuando la cookie es caducada o inválida.
+  if (pathname === '/login' && token) {
+    try {
+      const usuario = await auth.verificarToken(token)
+      if (usuario) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
+    } catch {
+      // si la verificación falla, se deja pasar al login
+    }
+    return NextResponse.next()
   }
 
   return NextResponse.next()

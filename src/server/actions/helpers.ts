@@ -1,3 +1,4 @@
+import { unstable_rethrow } from 'next/navigation'
 import { AppError } from '@/server/domain/errors'
 import { zodResolver } from '@hookform/resolvers/zod'
 import type { ZodType } from 'zod'
@@ -7,6 +8,7 @@ export type ActionResult<T = unknown> =
   | { ok: false; error: string; fieldErrors?: Record<string, string[]> }
 
 export function resultadoError(e: unknown): { ok: false; error: string; fieldErrors?: Record<string, string[]> } {
+  unstable_rethrow(e)
   if (e instanceof AppError) {
     return { ok: false, error: e.message, fieldErrors: e.fieldErrors }
   }

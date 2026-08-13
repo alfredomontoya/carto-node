@@ -1,5 +1,6 @@
 import { cache } from 'react'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
 import type { Modulo, SesionUsuario } from '@/server/domain/constants'
 import { canModule } from '@/server/domain/constants'
 import { forbidden } from '@/server/domain/errors'
@@ -19,7 +20,7 @@ export const getCurrentUser = cache(async (): Promise<SesionUsuario | null> => {
 export async function requireUser(): Promise<SesionUsuario> {
   const usuario = await getCurrentUser()
   if (!usuario || !usuario.active) {
-    throw forbidden('Debes iniciar sesión.')
+    redirect('/login')
   }
   return usuario
 }
