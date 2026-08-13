@@ -93,6 +93,7 @@ export class DocumentoService {
       areaId?: number
       tipo?: TipoDocumento | ''
       year?: number | ''
+      estado?: 'activo' | 'anulado' | 'todos'
       soloMios?: boolean
       page: number
       perPage: number
@@ -103,6 +104,7 @@ export class DocumentoService {
       areaId: filtros.areaId || undefined,
       tipo: filtros.tipo || undefined,
       year: filtros.year ? Number(filtros.year) : undefined,
+      estado: filtros.estado,
       soloMios: filtros.soloMios,
       userId: actor.id,
       page: filtros.page,
@@ -118,9 +120,12 @@ export class DocumentoService {
 
   private async obtenerAutorizado(id: number, actor: Actor): Promise<Documento> {
     const doc = await this.repos.documentos.findById(id)
-    if (!doc || doc.deletedAt) throw notFound('El documento no existe.')
+    if (!doc) throw notFound('El documento no existe.')
+    if (doc.estado === 'anulado') {
+      throw conflict('El documento ya fue anulado y no puede modificarse.')
+    }
     if (actor.role !== 'admin' && doc.creadoPor !== actor.id) {
-      throw forbidden('Solo el usuario que creó el documento puede editarlo.')
+      throw forbidden('Solo el usuario que creó el documento puede modificarlo.')
     }
     return doc
   }
@@ -141,9 +146,10 @@ export class DocumentoService {
     })
   }
 
-  async eliminar(id: number, actor: Actor): Promise<void> {
+  /** Anula el documento: pasa a estado `anulado` (consultable en histórico) y su número no se reutiliza. */
+  async anular(id: number, actor: Actor): Promise<void> {
     await this.obtenerAutorizado(id, actor)
-    await this.repos.documentos.softDelete(id)
+    await this.repos.documentos.anular(id)
   }
 
   async crearArchivo(id: number, actor: Actor, archivo: ArchivoVirtual): Promise<void> {

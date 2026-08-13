@@ -88,6 +88,7 @@ export interface DocumentoRepo {
     areaId?: number
     tipo?: 'ci' | 'of'
     year?: number
+    estado?: 'activo' | 'anulado' | 'todos'
     soloMios?: boolean
     userId?: number
     page: number
@@ -103,7 +104,9 @@ export interface DocumentoRepo {
     >
     total: number
   }>
-  softDelete(id: number): Promise<void>
+  countIssuedForYear(contadorId: number, year: number): Promise<number>
+  countByCreador(userId: number): Promise<number>
+  anular(id: number): Promise<void>
   update(id: number, data: {
     referencia?: string
     descripcion?: string | null

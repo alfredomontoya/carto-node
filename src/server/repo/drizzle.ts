@@ -354,16 +354,17 @@ const documentoRepo: DocumentoRepo = {
       .innerJoin(areas, eq(areas.id, documentos.areaId))
       .innerJoin(users, eq(users.id, documentos.creadoPor))
       .leftJoin(destUsers, eq(destUsers.id, documentos.destinatarioUserId))
-      .where(and(eq(documentos.id, id), isNull(documentos.deletedAt)))
+      .where(eq(documentos.id, id))
       .get()
     if (!row) return null
     const files = await db.select().from(documentFiles).where(eq(documentFiles.documentoId, id)).all()
     return { ...row, files }
   },
 
-  async list({ q, areaId, tipo, year, soloMios, userId, page, perPage }) {
+  async list({ q, areaId, tipo, year, estado, soloMios, userId, page, perPage }) {
+    const estadoFiltro = estado === 'anulado' ? 'anulado' : estado === 'todos' ? null : 'activo'
     const where = and(
-      isNull(documentos.deletedAt),
+      ...(estadoFiltro ? [eq(documentos.estado, estadoFiltro)] : []),
       ...(q ? [or(like(documentos.referencia, `%${q}%`), like(documentos.nroCompleto, `%${q}%`))] : []),
       ...(areaId ? [eq(documentos.areaId, areaId)] : []),
       ...(tipo ? [eq(documentos.tipo, tipo)] : []),
@@ -394,10 +395,30 @@ const documentoRepo: DocumentoRepo = {
     }
   },
 
-  async softDelete(id) {
+  async countIssuedForYear(contadorId, year) {
+    return (
+      (await db
+        .select({ c: count() })
+        .from(documentos)
+        .where(and(eq(documentos.contadorId, contadorId), eq(documentos.year, year)))
+        .get())?.c ?? 0
+    )
+  },
+
+  async countByCreador(userId) {
+    return (
+      (await db
+        .select({ c: count() })
+        .from(documentos)
+        .where(eq(documentos.creadoPor, userId))
+        .get())?.c ?? 0
+    )
+  },
+
+  async anular(id) {
     await db
       .update(documentos)
-      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .set({ estado: 'anulado', updatedAt: new Date() })
       .where(eq(documentos.id, id))
       .run()
   },
@@ -424,7 +445,7 @@ const documentoRepo: DocumentoRepo = {
       (await db
         .select({ c: count() })
         .from(documentos)
-        .where(and(eq(documentos.areaId, areaId), isNull(documentos.deletedAt)))
+        .where(eq(documentos.areaId, areaId))
         .get())?.c ?? 0
     )
   },

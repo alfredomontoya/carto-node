@@ -144,7 +144,7 @@ export const documentos = sqliteTable(
     creadoPor: integer('creado_por')
       .notNull()
       .references(() => users.id, { onDelete: 'restrict' }),
-    deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),
+    estado: text('estado', { enum: ['activo', 'anulado'] }).notNull().default('activo'),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().defaultNow(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().defaultNow(),
   },

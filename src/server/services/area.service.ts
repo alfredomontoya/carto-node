@@ -106,6 +106,9 @@ export class AreaService {
     const usuarios = await this.repos.areas.countUsersInArea(id)
     if (usuarios > 0) throw conflict('No se puede eliminar un área con usuarios asignados.')
 
+    const puestos = await this.repos.areas.puestosByArea(id)
+    if (puestos.length > 0) throw conflict('No se puede eliminar un área con puestos asignados.')
+
     const documentos = await this.repos.documentos.countByArea(id)
     if (documentos > 0) throw conflict('No se puede eliminar un área con documentos emitidos.')
 

@@ -13,17 +13,18 @@ const reiniciarSchema = z.object({
   areaId: z.number().int().positive(),
   tipo: z.enum(['ci', 'of']),
   glosa: z.string().min(3, 'La glosa debe tener al menos 3 caracteres.').trim(),
+  force: z.boolean().default(false),
 })
 
 export async function reiniciarContadorAction(
-  input: z.infer<typeof reiniciarSchema>,
+  input: z.input<typeof reiniciarSchema>,
 ): Promise<ActionResult<{ areaId: number; tipo: 'ci' | 'of' }>> {
   try {
     const admin = await requireAdmin()
     const parsed = reiniciarSchema.safeParse(input)
     if (!parsed.success) return { ok: false, error: 'Revisa los datos.', fieldErrors: parsed.error.flatten().fieldErrors }
 
-    await contadores.reiniciar(parsed.data.areaId, parsed.data.tipo, parsed.data.glosa, admin.id)
+    await contadores.reiniciar(parsed.data.areaId, parsed.data.tipo, parsed.data.glosa, admin.id, parsed.data.force)
     revalidatePath('/contadores')
     return success({ areaId: parsed.data.areaId, tipo: parsed.data.tipo })
   } catch (e) {

@@ -113,7 +113,7 @@ export async function actualizarDocumentoAction(
 export async function eliminarDocumentoAction(id: number): Promise<ActionResult<{ id: number }>> {
   try {
     const actor = await requireModule('documentos')
-    await docService.eliminar(id, { id: actor.id, role: actor.role, areaId: actor.asignacionActiva?.areaId ?? null })
+    await docService.anular(id, { id: actor.id, role: actor.role, areaId: actor.asignacionActiva?.areaId ?? null })
     revalidatePath('/documentos')
     return success({ id })
   } catch (e) {

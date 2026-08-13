@@ -10,7 +10,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   }
   const { id, fileId } = await params
   const documento = await repos.documentos.findById(Number(id))
-  if (!documento || documento.deletedAt) {
+  if (!documento || documento.estado === 'anulado') {
     return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
   }
   const file = await repos.files.findById(Number(fileId))

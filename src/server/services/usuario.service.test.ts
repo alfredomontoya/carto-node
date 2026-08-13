@@ -8,9 +8,11 @@ tdb.setEnv()
 const { repos } = await import('@/server/repo/drizzle')
 const { UsuarioService } = await import('@/server/services/usuario.service')
 const { AuthService } = await import('@/server/services/auth.service')
+const { DocumentoService } = await import('@/server/services/documento.service')
 
 const usuarios = new UsuarioService(repos)
 const auth = new AuthService(repos)
+const docs = new DocumentoService(repos)
 
 beforeEach(async () => {
   await limpiarTablas()
@@ -47,6 +49,15 @@ describe('UsuarioService', () => {
     const admin = await repos.users.create({ name: 'Admin', email: 'admin@seg.bo', passwordHash: 'x', role: 'admin', active: true })
     await expect(usuarios.eliminar(admin.id, admin.id + 99)).rejects.toThrow(/administrador/)
     await expect(usuarios.actualizar(admin.id, { role: 'user' })).rejects.toThrow(/administrador/)
+  })
+
+  it('no permite eliminar a un usuario que creó documentos', async () => {
+    const admin = await repos.users.create({ name: 'Admin', email: 'admin@seg.bo', passwordHash: 'x', role: 'admin', active: true })
+    const emisor = await repos.users.create({ name: 'Emisor', email: 'emisor@seg.bo', passwordHash: 'x', role: 'user', active: true })
+    const area = await repos.areas.create({ name: 'A', sigla: 'A', numeracionMode: 'propia', reiniciaAnualmente: true, active: true })
+    await docs.crear({ areaId: area.id, tipo: 'ci', referencia: 'Remisión', destinatarioTexto: 'D' }, { id: emisor.id, role: 'user', areaId: area.id })
+
+    await expect(usuarios.eliminar(emisor.id, admin.id)).rejects.toThrow(/documentos/)
   })
 
   it('resetPassword invalida las sesiones del usuario', async () => {

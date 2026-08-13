@@ -38,7 +38,7 @@ describe('DocumentoService.crear', () => {
       actor(admin.id, 'admin', null),
     )
 
-    expect(doc.nroCompleto).toBe(`PLAN-CI-001/${new Date().getFullYear()}`)
+    expect(doc.nroCompleto).toBe(`ci.plan.0001/${new Date().getFullYear()}`)
     expect(doc.numero).toBe(1)
     expect(doc.creadoPor).toBe(admin.id)
 
@@ -73,7 +73,7 @@ describe('DocumentoService.crear', () => {
     await repos.users.setActiveAssignment(u.id, propia.id, null)
 
     const ok = await docs.crear({ areaId: propia.id, tipo: 'of', referencia: 'Informe final', destinatarioTexto: 'Gobierno' }, actor(u.id, 'user', propia.id))
-    expect(ok.nroCompleto).toBe(`MIA-OF-001/${new Date().getFullYear()}`)
+    expect(ok.nroCompleto).toBe(`of.mia.0001/${new Date().getFullYear()}`)
 
     await expect(
       docs.crear({ areaId: otra.id, tipo: 'of', referencia: 'Informe final', destinatarioTexto: 'Gobierno' }, actor(u.id, 'user', propia.id)),
@@ -92,8 +92,8 @@ describe('DocumentoService.crear', () => {
   })
 })
 
-describe('DocumentoService.actualizar/eliminar', () => {
-  it('solo el creador (o un admin) puede editar o eliminar', async () => {
+describe('DocumentoService.actualizar/anular', () => {
+  it('solo el creador (o un admin) puede editar o anular', async () => {
     const admin = await crearUser('admin@x.com', 'admin')
     const otro = await crearUser('otro@x.com', 'user')
     const tercero = await crearUser('tercero@x.com', 'user')
@@ -104,7 +104,7 @@ describe('DocumentoService.actualizar/eliminar', () => {
     await expect(
       docs.actualizar(doc.id, actor(otro.id, 'user', area.id), { referencia: 'Hack' }),
     ).rejects.toThrow(/creó/i)
-    await expect(docs.eliminar(doc.id, actor(tercero.id, 'user', area.id))).rejects.toThrow(/creó/i)
+    await expect(docs.anular(doc.id, actor(tercero.id, 'user', area.id))).rejects.toThrow(/creó/i)
 
     const actualizado = await docs.actualizar(doc.id, actor(otro.id, 'user', area.id), { referencia: 'Original' }).catch(() => null)
     void actualizado
@@ -113,19 +113,41 @@ describe('DocumentoService.actualizar/eliminar', () => {
     const detalle = await docs.obtener(doc.id)
     expect(detalle.documento.referencia).toBe('Editado por admin')
 
-    await docs.eliminar(doc.id, actor(otro.id, 'user', area.id)).catch(() => {})
+    await docs.anular(doc.id, actor(otro.id, 'user', area.id)).catch(() => {})
     const trasAdmin = await repos.documentos.findById(doc.id)
-    expect(trasAdmin?.deletedAt).toBeNull()
+    expect(trasAdmin?.estado).toBe('activo')
   })
 
-  it('el creador puede eliminar (soft delete)', async () => {
+  it('el creador puede anular y el documento queda consultable', async () => {
     const admin = await crearUser('admin@x.com', 'admin')
     const area = await crearArea('A', 'A')
     const doc = await docs.crear({ areaId: area.id, tipo: 'ci', referencia: 'Original', destinatarioTexto: 'D' }, actor(admin.id, 'admin', null))
 
-    await docs.eliminar(doc.id, actor(admin.id, 'admin', null))
+    await docs.anular(doc.id, actor(admin.id, 'admin', null))
     const tras = await repos.documentos.findById(doc.id)
-    expect(tras?.deletedAt).toBeInstanceOf(Date)
-    await expect(docs.obtener(doc.id)).rejects.toThrow(/no existe/i)
+    expect(tras?.estado).toBe('anulado')
+    // anulada sigue siendo consultable (histórico)
+    const detalle = await docs.obtener(doc.id)
+    expect(detalle.documento.estado).toBe('anulado')
+    // no se puede anular dos veces ni editar
+    await expect(docs.anular(doc.id, actor(admin.id, 'admin', null))).rejects.toThrow(/anulado/i)
+    await expect(docs.actualizar(doc.id, actor(admin.id, 'admin', null), { referencia: 'X' })).rejects.toThrow(/anulado/i)
+  })
+
+  it('el listado oculta los anulados por defecto', async () => {
+    const admin = await crearUser('admin@x.com', 'admin')
+    const area = await crearArea('A', 'A')
+    const d1 = await docs.crear({ areaId: area.id, tipo: 'ci', referencia: 'Activo', destinatarioTexto: 'D' }, actor(admin.id, 'admin', null))
+    const d2 = await docs.crear({ areaId: area.id, tipo: 'ci', referencia: 'Anulado', destinatarioTexto: 'D' }, actor(admin.id, 'admin', null))
+    await docs.anular(d2.id, actor(admin.id, 'admin', null))
+
+    const activos = await docs.listar(actor(admin.id, 'admin', null), { page: 1, perPage: 20 })
+    expect(activos.items.map((d) => d.id)).toEqual([d1.id])
+
+    const todos = await docs.listar(actor(admin.id, 'admin', null), { estado: 'todos', page: 1, perPage: 20 })
+    expect(todos.items.map((d) => d.id)).toEqual([d2.id, d1.id])
+
+    const anulados = await docs.listar(actor(admin.id, 'admin', null), { estado: 'anulado', page: 1, perPage: 20 })
+    expect(anulados.items.map((d) => d.id)).toEqual([d2.id])
   })
 })

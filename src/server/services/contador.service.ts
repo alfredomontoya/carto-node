@@ -1,6 +1,5 @@
 import type { Area, Contador } from '@/db/schema'
 import type { TipoDocumento } from '@/server/domain/constants'
-import { SIGLA_TIPO } from '@/server/domain/constants'
 import { conflict, notFound } from '@/server/domain/errors'
 import type { Repos } from '@/server/repo/interface'
 
@@ -64,7 +63,7 @@ export class ContadorService {
     const contador = await this.getContador(owner, tipo)
     const numero = await this.repos.contadores.incrementUltimoNumero(contador.id)
     const year = new Date().getFullYear()
-    const nroCompleto = `${emisor.sigla}-${SIGLA_TIPO[tipo]}-${String(numero).padStart(3, '0')}/${year}`
+    const nroCompleto = `${tipo}.${owner.sigla.toLowerCase()}.${String(numero).padStart(4, '0')}/${year}`
 
     return {
       numero,
@@ -72,18 +71,35 @@ export class ContadorService {
       ciclo: contador.ciclo,
       contadorId: contador.id,
       areaOwnerId: owner.id,
-      sigla: emisor.sigla,
+      sigla: owner.sigla,
       nroCompleto,
     }
   }
 
-  /** Reinicio manual por el administrador: vuelve a 0 (siguiendo números nuevos en un ciclo distinto) + auditoría. */
-  async reiniciar(areaId: number, tipo: TipoDocumento, glosa: string, realizadoPor: number): Promise<Contador> {
+  /** Reinicio manual por el administrador: vuelve a 0 (siguiendo números nuevos en un ciclo distinto) + auditoría.
+   *  Por defecto queda bloqueado si el año actual ya emitió números para el área dueña
+   *  (o para áreas que numeran como ella); con `force` se reinicia igual conservando los documentos. */
+  async reiniciar(
+    areaId: number,
+    tipo: TipoDocumento,
+    glosa: string,
+    realizadoPor: number,
+    force = false,
+  ): Promise<Contador> {
     if (!glosa || glosa.trim().length < 3) {
       throw conflict('Debes indicar una glosa (motivo del reinicio) de al menos 3 caracteres.')
     }
     const owner = await this.resolveAreaOwner(areaId)
     const contador = await this.getContador(owner, tipo)
+    const year = new Date().getFullYear()
+
+    const emitidos = await this.repos.documentos.countIssuedForYear(contador.id, year)
+    if (emitidos > 0 && !force) {
+      throw conflict(
+        `El año ${year} ya emitió ${emitidos} número(s) para este correlativo. Usa "reiniciar de todos modos" si deseas forzarlo.`,
+      )
+    }
+
     const anterior = contador.ultimoNumero
 
     const nuevo = await this.repos.contadores.reiniciar(contador.id, glosa.trim())

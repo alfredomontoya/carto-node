@@ -109,6 +109,10 @@ export class UsuarioService {
       const admins = (await this.repos.users.list()).filter((u) => u.role === 'admin' && u.active)
       if (admins.length <= 1) throw conflict('No puedes eliminar al último administrador activo.')
     }
+    const creados = await this.repos.documentos.countByCreador(id)
+    if (creados > 0) {
+      throw conflict('No se puede eliminar un usuario que creó documentos: se perderían números del correlativo.')
+    }
     await this.repos.users.archive(id)
     await this.repos.sessions.deleteByUser(id)
   }

@@ -37,7 +37,7 @@ describe('ContadorService', () => {
     expect((await contadores.resolveAreaOwner(a.id)).id).toBe(a.id)
   })
 
-  it('comparte el contador del dueño pero usa la sigla del emisor', async () => {
+  it('comparte el contador del dueño y usa su sigla en el formato', async () => {
     const a = await crearArea('A', 'A', null, 'propia')
     const b = await crearArea('B', 'B', a.id, 'hereda')
     const c = await crearArea('C', 'C', b.id, 'hereda')
@@ -45,8 +45,8 @@ describe('ContadorService', () => {
     const n1 = await contadores.siguienteNumero(b.id, 'ci')
     const n2 = await contadores.siguienteNumero(c.id, 'ci')
 
-    expect(n1.nroCompleto).toBe(`B-CI-001/${year}`)
-    expect(n2.nroCompleto).toBe(`C-CI-002/${year}`)
+    expect(n1.nroCompleto).toBe(`ci.a.0001/${year}`)
+    expect(n2.nroCompleto).toBe(`ci.a.0002/${year}`)
     expect(n1.areaOwnerId).toBe(a.id)
     expect(n2.areaOwnerId).toBe(a.id)
     expect(n2.numero).toBe(n1.numero + 1)
@@ -60,19 +60,21 @@ describe('ContadorService', () => {
     const n1 = await contadores.siguienteNumero(a.id, 'of')
     const n2 = await contadores.siguienteNumero(b.id, 'of')
 
-    expect(n1.nroCompleto).toBe(`A-OF-001/${year}`)
-    expect(n2.nroCompleto).toBe(`B-OF-001/${year}`)
+    expect(n1.nroCompleto).toBe(`of.a.0001/${year}`)
+    expect(n2.nroCompleto).toBe(`of.b.0001/${year}`)
     expect(n1.contadorId).not.toBe(n2.contadorId)
   })
 
-  it('reabre un ciclo al reiniciar y registra la auditoría', async () => {
+  it('bloquea el reinicio si el año ya emitió números y lo permite con force', async () => {
     const admin = await crearAdmin()
     const a = await crearArea('A', 'A', null, 'propia')
 
-    await contadores.siguienteNumero(a.id, 'ci')
-    await contadores.siguienteNumero(a.id, 'ci')
+    await emitir(a.id, 'ci', admin.id)
+    await emitir(a.id, 'ci', admin.id)
 
-    const reiniciado = await contadores.reiniciar(a.id, 'ci', 'Cierre de gestión', admin.id)
+    await expect(contadores.reiniciar(a.id, 'ci', 'Cierre de gestión', admin.id)).rejects.toThrow(/ya emitió/i)
+
+    const reiniciado = await contadores.reiniciar(a.id, 'ci', 'Cierre de gestión', admin.id, true)
     expect(reiniciado.ciclo).toBe(2)
     expect(reiniciado.ultimoNumero).toBe(0)
 
@@ -89,6 +91,16 @@ describe('ContadorService', () => {
     const n = await contadores.siguienteNumero(a.id, 'ci')
     expect(n.ciclo).toBe(2)
     expect(n.numero).toBe(1)
+    expect(n.nroCompleto).toBe(`ci.a.0001/${year}`)
+  })
+
+  it('permite reiniciar sin conflicto cuando el año no emitió números', async () => {
+    const admin = await crearAdmin()
+    const a = await crearArea('A', 'A', null, 'propia')
+
+    const reiniciado = await contadores.reiniciar(a.id, 'ci', 'Reinicio preventivo', admin.id)
+    expect(reiniciado.ciclo).toBe(2)
+    expect(reiniciado.ultimoNumero).toBe(0)
   })
 
   it('exige una glosa al reiniciar', async () => {
@@ -103,4 +115,23 @@ async function repoContadorDe(areaOwnerId: number, tipo: 'ci' | 'of') {
   const contador = await repos.contadores.findByKey(areaOwnerId, tipo, new Date().getFullYear())
   if (!contador) throw new Error('Contador no encontrado')
   return contador
+}
+
+/** Emite un número "de verdad": asigna el correlativo y crea el documento. */
+async function emitir(areaId: number, tipo: 'ci' | 'of', creadoPor: number) {
+  const n = await contadores.siguienteNumero(areaId, tipo)
+  await repos.documentos.create({
+    areaId,
+    contadorId: n.contadorId,
+    tipo,
+    year: n.year,
+    ciclo: n.ciclo,
+    numero: n.numero,
+    nroCompleto: n.nroCompleto,
+    referencia: 'Emitido',
+    destinatarioTexto: 'Dest',
+    fechaDocumento: new Date(),
+    creadoPor,
+  })
+  return n
 }
