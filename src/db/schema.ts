@@ -15,6 +15,7 @@ export const users = sqliteTable('users', {
   passwordHash: text('password_hash').notNull(),
   role: text('role', { enum: ['admin', 'user', 'guest'] }).notNull().default('user'),
   active: integer('active', { mode: 'boolean' }).notNull().default(true),
+  theme: text('theme').notNull().default('carto-dark'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().defaultNow(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().defaultNow(),
 })
@@ -204,6 +205,12 @@ export const loginAttempts = sqliteTable('login_attempts', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().defaultNow(),
 })
 
+export const settings = sqliteTable('settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull().defaultNow(),
+})
+
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Area = typeof areas.$inferSelect
@@ -218,3 +225,5 @@ export type DocumentFile = typeof documentFiles.$inferSelect
 export type Reseteo = typeof resets.$inferSelect
 export type Session = typeof sessions.$inferSelect
 export type ModuleAssignment = typeof moduleAssignments.$inferSelect
+export type Setting = typeof settings.$inferSelect
+export type NewSetting = typeof settings.$inferInsert

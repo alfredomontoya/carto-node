@@ -1,5 +1,5 @@
 import { requireModule } from '@/server/auth/dal'
-import { repos } from '@/server/repo/drizzle'
+import { repos } from '@/server/repo'
 import { AreaService } from '@/server/services/area.service'
 import { AreaTree } from '@/components/areas/area-tree'
 

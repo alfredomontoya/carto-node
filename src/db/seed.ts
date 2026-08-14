@@ -1,9 +1,10 @@
 import bcrypt from 'bcryptjs'
 import { faker } from '@faker-js/faker/locale/es'
-import { repos } from '@/server/repo/drizzle'
+import { repos } from '@/server/repo'
 import { AreaService } from '@/server/services/area.service'
 import { DocumentoService } from '@/server/services/documento.service'
 import { ETIQUETA_TIPO } from '@/server/domain/constants'
+import { DOMINIO_CORREO, nombreAUsuario } from '@/server/domain/identidad'
 
 const areaService = new AreaService(repos)
 const docService = new DocumentoService(repos)
@@ -31,7 +32,7 @@ const ARBOL: AreaDef[] = [
 async function main() {
   const [{ count }] = [{ count: await repos.users.count() }]
   if (count > 0) {
-    console.log('La base ya tiene usuarios. Se omite el seed (usa db:seed:fresh si quieres reiniciar).')
+    console.log('La base ya tiene usuarios. Se omite el seed (usa db:reset para reiniciar).')
     return
   }
 
@@ -39,13 +40,13 @@ async function main() {
   const idPorSigla = new Map<string, number>()
   const admin = await repos.users.create({
     name: 'Administrador del Sistema',
-    email: 'admin@seguimiento.gob.bo',
-    passwordHash: bcrypt.hashSync('admin123', 12),
+    email: `admin@${DOMINIO_CORREO}`,
+    passwordHash: bcrypt.hashSync('password', 12),
     role: 'admin',
     active: true,
   })
   await repos.users.setModules(admin.id, [])
-  console.log('• Usuario admin creado (admin@seguimiento.gob.bo / admin123)')
+  console.log(`• Usuario admin creado (usuario: admin / admin@${DOMINIO_CORREO} / password)`)
 
   for (const def of ARBOL) {
     const parentId = def.parent ? idPorSigla.get(def.parent) ?? null : null
@@ -69,14 +70,15 @@ async function main() {
   for (let i = 0; i < 10; i++) {
     const role = roles[i]
     const nombre = faker.person.fullName()
-    const email = faker.internet.email({ firstName: nombre.split(' ')[0], provider: 'seguimiento.gob.bo' })
+    const usuarioNombre = nombreAUsuario(nombre)
+    const email = `${usuarioNombre}@${DOMINIO_CORREO}`
     const area = todasLasAreas[faker.number.int({ min: 0, max: todasLasAreas.length - 1 })]
     const puestos = await repos.areas.puestosByArea(area.id)
     const puesto = puestos[faker.number.int({ min: 0, max: Math.max(0, puestos.length - 1) })]
     const usuario = await repos.users.create({
       name: nombre,
-      email: email.toLowerCase(),
-      passwordHash: bcrypt.hashSync(`${nombre.split(' ')[0].toLowerCase()}@seguimiento.gob.bo.123`, 12),
+      email,
+      passwordHash: bcrypt.hashSync('password', 12),
       role,
       active: true,
     })
@@ -89,7 +91,7 @@ async function main() {
     await repos.users.setModules(usuario.id, modulos.filter((m): m is 'areas' | 'documentos' => m === 'areas' || m === 'documentos'))
     await repos.users.setActiveAssignment(usuario.id, area.id, puesto.id)
     usuarios.push({ id: usuario.id, name: nombre, areaId: area.id, puestoId: puesto.id })
-    console.log(`• Usuario creado: ${nombre} (${email}) [${role}] en ${area.name}`)
+    console.log(`• Usuario creado: ${nombre} (usuario: ${usuarioNombre} / ${email}) [${role}] en ${area.name}`)
   }
 
   // ---------- 50 documentos: 30 CI + 20 OF ----------

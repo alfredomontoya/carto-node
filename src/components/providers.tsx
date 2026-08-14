@@ -18,7 +18,7 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem enableColorScheme>
+    <ThemeProvider attribute="data-theme" storageKey="carto:tema" defaultTheme="carto-dark">
       <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
       <Toaster richColors position="bottom-right" theme="system" />
     </ThemeProvider>

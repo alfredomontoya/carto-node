@@ -150,6 +150,11 @@ export interface AuditRepo {
   recordAttempt(data: { email: string | null; ip: string; success: boolean }): Promise<void>
 }
 
+export interface SettingsRepo {
+  get(key: string): Promise<string | null>
+  set(key: string, value: string): Promise<void>
+}
+
 export interface Repos {
   users: UserRepo
   areas: AreaRepo
@@ -158,4 +163,5 @@ export interface Repos {
   files: DocumentFileRepo
   sessions: SessionRepo
   audit: AuditRepo
+  settings: SettingsRepo
 }

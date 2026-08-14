@@ -48,6 +48,7 @@ export async function limpiarTablas(): Promise<void> {
     'puestos',
     'areas',
     'users',
+    'settings',
   ]
   for (const t of tabs) {
     await db.run(sql.raw(`DELETE FROM "${t}"`))

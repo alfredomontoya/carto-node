@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { RefreshCcw, RotateCcw, History } from 'lucide-react'
+import { RefreshCcw, RotateCcw, RotateCw, History } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -103,10 +103,10 @@ export function ContadoresClient({
               <TableBody>
                 {estados.map((e) => (
                   <TableRow key={e.area.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{e.area.name}</span>
-                        <Badge variant="outline">{e.area.sigla}</Badge>
+                    <TableCell className="max-w-64">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="truncate font-medium">{e.area.name}</span>
+                        <Badge variant="outline" className="shrink-0">{e.area.sigla}</Badge>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -121,19 +121,23 @@ export function ContadoresClient({
                         <div className="flex justify-end gap-1">
                           <Button
                             variant="ghost"
-                            size="sm"
-                            className="gap-1 text-destructive"
+                            size="icon-sm"
+                            className="text-destructive hover:text-destructive"
+                            title={`Reiniciar CI de ${e.area.name}`}
+                            aria-label={`Reiniciar CI de ${e.area.name}`}
                             onClick={() => setReiniciando({ areaId: e.area.id, areaName: e.area.name, tipo: 'ci' })}
                           >
-                            <RotateCcw className="h-4 w-4" /> Reiniciar CI
+                            <RotateCcw />
                           </Button>
                           <Button
                             variant="ghost"
-                            size="sm"
-                            className="gap-1 text-destructive"
+                            size="icon-sm"
+                            className="text-destructive hover:text-destructive"
+                            title={`Reiniciar OF de ${e.area.name}`}
+                            aria-label={`Reiniciar OF de ${e.area.name}`}
                             onClick={() => setReiniciando({ areaId: e.area.id, areaName: e.area.name, tipo: 'of' })}
                           >
-                            <RotateCcw className="h-4 w-4" /> Reiniciar OF
+                            <RotateCw />
                           </Button>
                         </div>
                       </TableCell>
@@ -162,8 +166,11 @@ export function ContadoresClient({
                 {resets.map((r) => (
                   <TableRow key={r.id}>
                     <TableCell className="text-xs text-muted-foreground">{formatFecha(r.createdAt)}</TableCell>
-                    <TableCell>
-                      {r.areaName} <span className="text-xs text-muted-foreground">({r.areaSigla})</span>
+                    <TableCell className="max-w-56">
+                      <div className="flex min-w-0 items-baseline gap-1">
+                        <span className="truncate">{r.areaName}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground">({r.areaSigla})</span>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">{r.tipo.toUpperCase()}</Badge>

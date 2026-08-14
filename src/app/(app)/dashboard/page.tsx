@@ -1,7 +1,7 @@
 import { cache } from 'react'
 import { FileText, Building2, Users, Mail, MailOpen } from 'lucide-react'
 import { requireUser } from '@/server/auth/dal'
-import { repos } from '@/server/repo/drizzle'
+import { repos } from '@/server/repo'
 import { ContadorService } from '@/server/services/contador.service'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -106,11 +106,13 @@ export default async function DashboardPage() {
               <TableBody>
                 {estados.map((e) => (
                   <TableRow key={e.area.id}>
-                    <TableCell>
-                      <span className="font-medium">{e.area.name}</span>{' '}
-                      <Badge variant="outline" className="ml-1 hidden sm:inline">
-                        {e.area.sigla}
-                      </Badge>
+                    <TableCell className="max-w-56">
+                      <div className="flex min-w-0 items-center gap-1">
+                        <span className="truncate font-medium">{e.area.name}</span>
+                        <Badge variant="outline" className="ml-1 hidden shrink-0 sm:inline">
+                          {e.area.sigla}
+                        </Badge>
+                      </div>
                     </TableCell>
                     <TableCell>
                       {e.ci ? (

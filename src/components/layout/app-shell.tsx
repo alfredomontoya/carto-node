@@ -9,13 +9,14 @@ import {
   Network,
   Users,
   Hash,
+  Settings,
   PanelLeftClose,
   PanelLeftOpen,
   Globe,
   LogOut,
   UserCircle2,
-  Sun,
-  Moon,
+  Palette,
+  Check,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
@@ -30,7 +31,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { logoutAction } from '@/server/actions/auth.actions'
-import { canModule, type SesionUsuario, type Modulo } from '@/server/domain/constants'
+import { setTemaAction } from '@/server/actions/preferences.actions'
+import { TEMAS, canModule, type SesionUsuario, type Modulo } from '@/server/domain/constants'
 
 export interface NavItem {
   href: string
@@ -44,6 +46,7 @@ const NAV: NavItem[] = [
   { href: '/areas', label: 'Áreas y Puestos', modulo: 'areas' },
   { href: '/usuarios', label: 'Usuarios', modulo: 'usuarios' },
   { href: '/contadores', label: 'Numeración', modulo: 'contadores' },
+  { href: '/configuracion', label: 'Configuración', modulo: 'usuarios' },
 ]
 
 const ICONS: Record<string, React.ElementType> = {
@@ -52,6 +55,7 @@ const ICONS: Record<string, React.ElementType> = {
   '/areas': Network,
   '/usuarios': Users,
   '/contadores': Hash,
+  '/configuracion': Settings,
 }
 
 const TITULOS: Array<[string, string]> = [
@@ -60,8 +64,17 @@ const TITULOS: Array<[string, string]> = [
   ['/areas', 'Áreas y Puestos'],
   ['/usuarios', 'Usuarios'],
   ['/contadores', 'Numeración'],
+  ['/configuracion', 'Configuración'],
   ['/dashboard', 'Dashboard'],
 ]
+
+const TEMA_LABEL: Record<string, string> = {
+  'carto-light': 'Carto claro',
+  'carto-dark': 'Carto oscuro',
+  'neon-light': 'Neon claro',
+  'neon-dark': 'Neon oscuro',
+  consola: 'Consola',
+}
 
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
@@ -78,7 +91,12 @@ export function AppShell({
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const pathname = usePathname()
-  const { resolvedTheme, setTheme } = useTheme()
+  const { theme, setTheme } = useTheme()
+
+  const cambiarTema = (tema: string) => {
+    setTheme(tema)
+    void setTemaAction(tema)
+  }
 
   useEffect(() => {
     const stored = window.localStorage.getItem('carto:sidebar')
@@ -95,7 +113,11 @@ export function AppShell({
     })
   }
 
-  const nav = NAV.filter((item) => item.href === '/dashboard' || canModule(user, item.modulo))
+  const nav = NAV.filter((item) => {
+    if (item.href === '/dashboard') return true
+    if (item.href === '/configuracion') return user.role === 'admin'
+    return canModule(user, item.modulo)
+  })
 
   const titulo = TITULOS.find(([p]) => pathname === p || pathname.startsWith(`${p}/`))?.[1] ?? 'Carto'
 
@@ -160,14 +182,23 @@ export function AppShell({
             <h1 className="truncate text-base font-semibold">{titulo}</h1>
           </div>
           <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Cambiar tema"
-              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            >
-              {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" aria-label="Cambiar tema">
+                  <Palette className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuLabel>Tema de la aplicación</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {TEMAS.map((t) => (
+                  <DropdownMenuItem key={t} onSelect={() => cambiarTema(t)} className="flex items-center justify-between">
+                    {TEMA_LABEL[t]}
+                    {theme === t && <Check className="h-4 w-4" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2 px-2">
@@ -197,7 +228,7 @@ export function AppShell({
             </DropdownMenu>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-6xl flex-1 p-4 sm:p-6">{children}</main>
+        <main className="w-full flex-1 p-4 sm:p-6">{children}</main>
         <footer className="flex items-center justify-center gap-1.5 border-t px-4 py-3 text-xs text-muted-foreground">
           <Globe className="h-3.5 w-3.5" />
           Sistema de numeración de comunicaciones internas y oficios externos

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireModule } from '@/server/auth/dal'
-import { repos } from '@/server/repo/drizzle'
+import { repos } from '@/server/repo'
 import { UsuarioService } from '@/server/services/usuario.service'
 import { resultadoError, success, type ActionResult } from './helpers'
 
@@ -11,7 +11,7 @@ const usuarios = new UsuarioService(repos)
 
 const userSchema = z.object({
   name: z.string().min(3, 'Nombre obligatorio.').trim(),
-  email: z.string().email('Correo inválido.'),
+  email: z.string().email('Correo inválido.').optional().or(z.literal('')),
   password: z.string().min(6, 'Mínimo 6 caracteres').optional().or(z.literal('')),
   role: z.enum(['admin', 'user', 'guest']),
   active: z.boolean().optional(),
@@ -30,7 +30,7 @@ export async function crearUsuarioAction(input: z.infer<typeof userSchema>): Pro
     }
     const creado = await usuarios.crear({
       name: parsed.data.name,
-      email: parsed.data.email,
+      email: parsed.data.email || undefined,
       password: parsed.data.password || undefined,
       role: parsed.data.role,
       modules: parsed.data.modules,
@@ -57,7 +57,7 @@ export async function actualizarUsuarioAction(
     if (!parsed.success) return { ok: false, error: 'Revisa los datos.', fieldErrors: parsed.error.flatten().fieldErrors }
     await usuarios.actualizar(id, {
       name: parsed.data.name,
-      email: parsed.data.email,
+      email: parsed.data.email || undefined,
       role: parsed.data.role,
       active: parsed.data.active ?? true,
       modules: parsed.data.modules,

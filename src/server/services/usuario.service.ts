@@ -2,11 +2,12 @@ import bcrypt from 'bcryptjs'
 import type { Modulo } from '@/server/domain/constants'
 import type { Rol } from '@/server/domain/constants'
 import { conflict, notFound, validationError } from '@/server/domain/errors'
+import { DOMINIO_CORREO, nombreAUsuario } from '@/server/domain/identidad'
 import type { Repos } from '@/server/repo/interface'
 
 export interface DatosUsuario {
   name: string
-  email: string
+  email?: string
   password?: string
   role: 'admin' | 'user' | 'guest'
   active?: boolean
@@ -29,16 +30,16 @@ export class UsuarioService {
   }
 
   async crear(datos: DatosUsuario): Promise<{ id: number }> {
-    this.validarDatos(datos)
+    const email = this.resolverEmail(datos)
+    this.validarDatos({ ...datos, email })
 
-    const existente = await this.repos.users.findByEmail(datos.email)
-    if (existente) throw conflict('Ya existe un usuario con ese correo electrónico.')
+    const existente = await this.repos.users.findByEmail(email)
+    if (existente) throw conflict('Ya existe un usuario con ese nombre de usuario.')
 
-    const [nombre, dominio] = datos.email.toLowerCase().split('@')
     const usuario = await this.repos.users.create({
       name: datos.name.trim(),
-      email: datos.email.toLowerCase().trim(),
-      passwordHash: bcrypt.hashSync(datos.password ?? `${nombre}${dominio}.123`, 12),
+      email,
+      passwordHash: bcrypt.hashSync(datos.password ?? 'password', 12),
       role: datos.role,
       active: datos.active !== false,
     })
@@ -63,7 +64,7 @@ export class UsuarioService {
     if (datos.email) {
       this.validarDatos({ ...(datos as DatosUsuario), name: datos.name ?? usuario.name, email: datos.email })
       const existente = await this.repos.users.findByEmail(datos.email)
-      if (existente && existente.id !== id) throw conflict('Ya existe un usuario con ese correo electrónico.')
+      if (existente && existente.id !== id) throw conflict('Ya existe un usuario con ese nombre de usuario.')
     } else {
       this.validarDatos({ ...(datos as DatosUsuario), name: datos.name ?? usuario.name, email: usuario.email })
     }
@@ -130,6 +131,17 @@ export class UsuarioService {
   private normalizarModulos(role: Rol, modules: string[]): Modulo[] {
     if (role === 'admin') return [] // el admin tiene acceso total
     return modules.filter((m): m is Modulo => m === 'areas' || m === 'documentos') as Modulo[]
+  }
+
+  private resolverEmail(datos: Pick<DatosUsuario, 'name' | 'email'>): string {
+    if (datos.email?.trim()) {
+      return datos.email.trim().toLowerCase()
+    }
+    const usuario = nombreAUsuario(datos.name)
+    if (!usuario) {
+      throw conflict('El nombre no genera un nombre de usuario válido (usa letras o números).')
+    }
+    return `${usuario}@${DOMINIO_CORREO}`
   }
 
   private validarDatos(datos: DatosUsuario): void {

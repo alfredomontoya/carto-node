@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireAdmin } from '@/server/auth/dal'
-import { repos } from '@/server/repo/drizzle'
+import { repos } from '@/server/repo'
 import { ContadorService } from '@/server/services/contador.service'
 import { resultadoError, success, type ActionResult } from './helpers'
 

@@ -8,19 +8,20 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { loginAction } from '@/server/actions/auth.actions'
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const [state, formAction, pending] = useActionState(loginAction, undefined)
 
   return (
     <form action={formAction} className="space-y-4">
+      {next ? <input type="hidden" name="next" value={next} /> : null}
       <div className="space-y-2">
-        <Label htmlFor="email">Correo electrónico</Label>
+        <Label htmlFor="usuario">Usuario</Label>
         <Input
-          id="email"
-          name="email"
-          type="email"
+          id="usuario"
+          name="usuario"
+          type="text"
           autoComplete="username"
-          placeholder="juan@seguimiento.gob.bo"
+          placeholder="amontoya"
           required
         />
       </div>

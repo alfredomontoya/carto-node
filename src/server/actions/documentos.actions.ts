@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { requireModule } from '@/server/auth/dal'
-import { repos } from '@/server/repo/drizzle'
+import { repos } from '@/server/repo'
 import { DocumentoService } from '@/server/services/documento.service'
 import { resultadoError, success, type ActionResult } from './helpers'
 

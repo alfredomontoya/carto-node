@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/server/auth/dal'
-import { repos } from '@/server/repo/drizzle'
+import { repos } from '@/server/repo'
 import { obtenerStorage } from '@/server/services/storage.service'
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string; fileId: string }> }) {

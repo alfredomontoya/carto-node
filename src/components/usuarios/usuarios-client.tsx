@@ -62,12 +62,14 @@ const TRANSLATE: Record<string, string> = {
 export function UsuariosClient({
   esAdmin,
   usuarioActivoId,
+  dominio,
   usuarios,
   areas,
   puestosPorArea,
 }: {
   esAdmin: boolean
   usuarioActivoId: number
+  dominio: string
   usuarios: UsuarioRow[]
   areas: { id: number; name: string; sigla: string; active: boolean }[]
   puestosPorArea: Record<number, { id: number; name: string; sigla: string }[]>
@@ -144,7 +146,8 @@ export function UsuariosClient({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {usuarios.length} usuarios registrados. La contraseña por defecto se genera desde el correo.
+          {usuarios.length} usuarios registrados. El correo se genera automáticamente como{' '}
+          <span className="font-medium">usuario@{dominio}</span> y el acceso es con nombre de usuario y contraseña.
         </p>
         {esAdmin && (
           <Button size="sm" onClick={() => setEditando({ id: null, name: '', email: '', password: '', role: 'user', active: true, modules: ['documentos'], areaId: 'none', puestoId: 'none' })}>
@@ -169,14 +172,14 @@ export function UsuariosClient({
           <TableBody>
             {usuarios.map((u) => (
               <TableRow key={u.id}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-7 w-7">
+                <TableCell className="max-w-56">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Avatar className="h-7 w-7 shrink-0">
                       <AvatarFallback>{u.name.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    <div>
-                      <div className="font-medium">{u.name}</div>
-                      <div className="text-xs text-muted-foreground">{u.email}</div>
+                    <div className="min-w-0">
+                      <div className="truncate font-medium">{u.name}</div>
+                      <div className="truncate text-xs text-muted-foreground">{u.email}</div>
                     </div>
                   </div>
                 </TableCell>
@@ -185,12 +188,12 @@ export function UsuariosClient({
                     {TRANSLATE[u.role] ?? u.role}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell className="max-w-56">
                   {u.asignacionActiva?.areaName ? (
-                    <div className="flex items-center gap-1 text-sm">
-                      <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                      {u.asignacionActiva.areaName}
-                      <span className="text-xs text-muted-foreground">· {u.asignacionActiva.puestoName ?? '—'}</span>
+                    <div className="flex min-w-0 items-center gap-1 text-sm">
+                      <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="truncate">{u.asignacionActiva.areaName}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">· {u.asignacionActiva.puestoName ?? '—'}</span>
                     </div>
                   ) : (
                     <span className="text-muted-foreground">Sin asignar</span>
@@ -236,15 +239,19 @@ export function UsuariosClient({
           </DialogHeader>
           {editando && (
             <div className="grid gap-4 py-2">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Nombre completo</Label>
-                  <Input value={editando.name} onChange={(e) => setEditando({ ...editando, name: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Correo electrónico</Label>
-                  <Input value={editando.email} onChange={(e) => setEditando({ ...editando, email: e.target.value })} type="email" />
-                </div>
+              <div className="space-y-2">
+                <Label>Nombre completo</Label>
+                <Input value={editando.name} onChange={(e) => setEditando({ ...editando, name: e.target.value })} placeholder="Ej. Amontoya" />
+              </div>
+              <div className="space-y-2">
+                <Label>Correo electrónico</Label>
+                {editando.id ? (
+                  <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">{editando.email}</div>
+                ) : (
+                  <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                    Se generará automáticamente: <span className="font-medium text-foreground">usuario@{dominio}</span>
+                  </div>
+                )}
               </div>
               <div className="grid gap-2 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -328,7 +335,7 @@ export function UsuariosClient({
             <Button variant="outline" onClick={() => setEditando(null)}>
               Cancelar
             </Button>
-            <Button onClick={submit} disabled={saving || !editando?.name || !editando?.email}>
+            <Button onClick={submit} disabled={saving || !editando?.name}>
               {saving ? 'Guardando...' : editando?.id ? 'Guardar cambios' : 'Crear usuario'}
             </Button>
           </DialogFooter>

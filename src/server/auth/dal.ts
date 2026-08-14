@@ -4,12 +4,13 @@ import { redirect } from 'next/navigation'
 import type { Modulo, SesionUsuario } from '@/server/domain/constants'
 import { canModule } from '@/server/domain/constants'
 import { forbidden } from '@/server/domain/errors'
-import { repos } from '@/server/repo/drizzle'
+import { repos } from '@/server/repo'
 import { AuthService } from '@/server/services/auth.service'
 
 const auth = new AuthService(repos)
 
 export const SESSION_COOKIE = process.env.SESSION_COOKIE ?? 'carto_session'
+export const TEMA_COOKIE = 'carto_tema'
 
 export const getCurrentUser = cache(async (): Promise<SesionUsuario | null> => {
   const store = await cookies()

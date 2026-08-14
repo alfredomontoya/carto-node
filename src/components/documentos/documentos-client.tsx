@@ -177,9 +177,11 @@ export function DocumentosClient({
                   <Badge variant={d.tipo === 'ci' ? 'secondary' : 'default'}>{SIGLA_TIPO[d.tipo]}</Badge>
                 </TableCell>
                 <TableCell className="max-w-52 truncate">{d.referencia}</TableCell>
-                <TableCell>
-                  {d.areaSigla}
-                  <span className="ml-1 text-xs text-muted-foreground">{d.areaName}</span>
+                <TableCell className="max-w-56">
+                  <div className="flex min-w-0 items-baseline gap-1">
+                    <span className="font-medium">{d.areaSigla}</span>
+                    <span className="truncate text-xs text-muted-foreground">{d.areaName}</span>
+                  </div>
                 </TableCell>
                 <TableCell className="max-w-40 truncate">{destino(d)}</TableCell>
                 <TableCell className="whitespace-nowrap text-xs text-muted-foreground">{formatFecha(d.fechaDocumento)}</TableCell>

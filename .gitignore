@@ -43,3 +43,5 @@ next-env.d.ts
 # carto: datos locales y adjuntos
 /data
 /uploads
+
+/backups

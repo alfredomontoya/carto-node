@@ -64,7 +64,7 @@ export function AreaTree({
         </Button>
       </div>
 
-      <div className="rounded-lg border bg-card">
+      <div className="overflow-hidden rounded-lg border bg-card">
         {arbol.length === 0 && (
           <div className="p-8 text-center text-sm text-muted-foreground">No hay áreas registradas.</div>
         )}
@@ -127,7 +127,7 @@ function Nodo({
           {abierto ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
         </button>
         {abierto ? <FolderOpen className="h-4 w-4 text-primary" /> : <Folder className="h-4 w-4 text-primary" />}
-        <span className="font-medium">{nodo.name}</span>
+        <span className="min-w-0 truncate font-medium">{nodo.name}</span>
         <Badge variant="outline">{nodo.sigla}</Badge>
         <Badge variant={nodo.numeracionMode === 'propia' ? 'default' : 'secondary'}>
           {nodo.numeracionMode === 'propia' ? 'numeración propia' : 'hereda'}

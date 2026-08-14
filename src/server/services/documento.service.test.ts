@@ -5,7 +5,7 @@ import { createTestDb, limpiarTablas } from '@/db/test-db'
 const tdb = createTestDb()
 tdb.setEnv()
 
-const { repos } = await import('@/server/repo/drizzle')
+const { repos } = await import('@/server/repo')
 const { DocumentoService } = await import('@/server/services/documento.service')
 
 const docs = new DocumentoService(repos)

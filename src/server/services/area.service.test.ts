@@ -4,7 +4,7 @@ import { createTestDb, limpiarTablas } from '@/db/test-db'
 const tdb = createTestDb()
 tdb.setEnv()
 
-const { repos } = await import('@/server/repo/drizzle')
+const { repos } = await import('@/server/repo')
 const { AreaService } = await import('@/server/services/area.service')
 
 const areas = new AreaService(repos)

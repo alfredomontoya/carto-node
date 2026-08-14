@@ -1,5 +1,5 @@
 import { requireAdmin } from '@/server/auth/dal'
-import { repos } from '@/server/repo/drizzle'
+import { repos } from '@/server/repo'
 import { ContadorService } from '@/server/services/contador.service'
 import { ContadoresClient } from '@/components/contadores/contadores-client'
 

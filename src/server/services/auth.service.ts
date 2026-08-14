@@ -1,7 +1,9 @@
 import { randomBytes } from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import type { SesionUsuario } from '@/server/domain/constants'
+import { esTemaValido } from '@/server/domain/constants'
 import { AppError, notFound } from '@/server/domain/errors'
+import { DOMINIO_CORREO } from '@/server/domain/identidad'
 import type { Repos } from '@/server/repo/interface'
 
 export interface LoginResultado {
@@ -15,28 +17,29 @@ const VENTANA_SEGUNDOS = 15 * 60
 export class AuthService {
   constructor(private readonly repos: Repos) {}
 
-  async login(email: string, password: string, ip: string): Promise<LoginResultado> {
-    const emailNorm = email.toLowerCase().trim()
+  async login(identificador: string, password: string, ip: string): Promise<LoginResultado> {
+    const ident = identificador.toLowerCase().trim()
+    const email = ident.includes('@') ? ident : `${ident}@${DOMINIO_CORREO}`
 
-    const recientes = await this.repos.audit.countRecentAttempts(emailNorm, ip, VENTANA_SEGUNDOS)
+    const recientes = await this.repos.audit.countRecentAttempts(email, ip, VENTANA_SEGUNDOS)
     if (recientes >= MAX_INTENTOS) {
       throw new AppError('Demasiados intentos. Intenta nuevamente en unos minutos.', 'AUTH', 429)
     }
 
-    const usuario = await this.repos.users.findByEmail(emailNorm)
+    const usuario = await this.repos.users.findByEmail(email)
     const valido = usuario && (await bcrypt.compare(password, usuario.passwordHash))
 
     if (!usuario || !valido) {
-      await this.repos.audit.recordAttempt({ email: emailNorm, ip, success: false })
+      await this.repos.audit.recordAttempt({ email, ip, success: false })
       throw new AppError('Credenciales incorrectas.', 'AUTH', 401)
     }
 
     if (!usuario.active) {
-      await this.repos.audit.recordAttempt({ email: emailNorm, ip, success: false })
+      await this.repos.audit.recordAttempt({ email, ip, success: false })
       throw new AppError('Tu cuenta está desactivada. Contacta al administrador.', 'AUTH', 403)
     }
 
-    await this.repos.audit.recordAttempt({ email: emailNorm, ip, success: true })
+    await this.repos.audit.recordAttempt({ email, ip, success: true })
 
     const token = randomBytes(48).toString('hex')
     const ttlDias = Number(process.env.SESSION_TTL_DAYS ?? 7)
@@ -73,6 +76,7 @@ export class AuthService {
       email: usuario.email,
       role: usuario.role,
       active: usuario.active,
+      theme: esTemaValido(usuario.theme) ? usuario.theme : 'carto-dark',
       modules: usuario.role === 'admin' ? ['areas', 'documentos', 'contadores', 'usuarios'] : usuario.moduleAssignments.map((a) => a.module),
       asignacionActiva: asignacion
         ? {

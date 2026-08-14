@@ -11,6 +11,7 @@ import {
   puestos,
   resets,
   sessions,
+  settings,
   userAreas,
   users,
   type NewArea,
@@ -27,8 +28,9 @@ import type {
   DocumentoRepo,
   Repos,
   SessionRepo,
+  SettingsRepo,
   UserRepo,
-} from './interface'
+} from '../interface'
 
 const destUsers = alias(users, 'destinatario_users')
 
@@ -507,7 +509,20 @@ const auditRepo: AuditRepo = {
   },
 }
 
-export const repos: Repos = {
+const settingsRepo: SettingsRepo = {
+  async get(key) {
+    return (await db.select().from(settings).where(eq(settings.key, key)).get())?.value ?? null
+  },
+  async set(key, value) {
+    await db
+      .insert(settings)
+      .values({ key, value })
+      .onConflictDoUpdate({ target: settings.key, set: { value, updatedAt: new Date() } })
+      .run()
+  },
+}
+
+export const sqliteRepos: Repos = {
   users: usersRepo,
   areas: areasRepo,
   contadores: contadoresRepo,
@@ -515,4 +530,5 @@ export const repos: Repos = {
   files: filesRepo,
   sessions: sessionsRepo,
   audit: auditRepo,
+  settings: settingsRepo,
 }

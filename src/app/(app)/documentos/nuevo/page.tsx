@@ -1,5 +1,5 @@
 import { requireModule } from '@/server/auth/dal'
-import { repos } from '@/server/repo/drizzle'
+import { repos } from '@/server/repo'
 import { DocumentoForm } from '@/components/documentos/documento-form'
 
 export default async function NuevoDocumentoPage() {

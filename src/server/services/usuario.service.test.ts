@@ -5,7 +5,7 @@ import { createTestDb, limpiarTablas } from '@/db/test-db'
 const tdb = createTestDb()
 tdb.setEnv()
 
-const { repos } = await import('@/server/repo/drizzle')
+const { repos } = await import('@/server/repo')
 const { UsuarioService } = await import('@/server/services/usuario.service')
 const { AuthService } = await import('@/server/services/auth.service')
 const { DocumentoService } = await import('@/server/services/documento.service')
@@ -21,14 +21,25 @@ beforeEach(async () => {
 afterAll(() => tdb.cleanup())
 
 describe('UsuarioService', () => {
-  it('crea un usuario con contraseña por defecto derivada del correo', async () => {
-    await usuarios.crear({ name: 'Juan Pérez', email: 'juan@seguimiento.bo', role: 'user', modules: ['documentos'] })
-    const creado = await repos.users.findByEmail('juan@seguimiento.bo')
+  it('deriva el correo del nombre y permite iniciar sesión solo con el nombre de usuario', async () => {
+    await usuarios.crear({ name: 'Juan Pérez', role: 'user', modules: ['documentos'] })
+    const creado = await repos.users.findByEmail('juan.perez@carto.com')
     expect(creado).not.toBeNull()
     expect(creado!.role).toBe('user')
-    // inicio de sesión con la password por defecto: nombre@dominio.123
-    const { token } = await auth.login('juan@seguimiento.bo', 'juanseguimiento.bo.123', 'ip-test')
+    // inicio de sesión con el nombre de usuario + password por defecto: 'password'
+    const { token } = await auth.login('juan.perez', 'password', 'ip-test')
     expect(token).toBeTruthy()
+  })
+
+  it('acepta un correo explícito al crear el usuario', async () => {
+    await usuarios.crear({ name: 'Carlos Díaz', email: 'carlos@otro.dominio', role: 'user', modules: ['documentos'] })
+    const creado = await repos.users.findByEmail('carlos@otro.dominio')
+    expect(creado).not.toBeNull()
+  })
+
+  it('rechaza el nombre de usuario duplicado derivado del nombre', async () => {
+    await usuarios.crear({ name: 'Ana Torres', role: 'user', modules: [] })
+    await expect(usuarios.crear({ name: 'Ana Torres', role: 'user', modules: [] })).rejects.toThrow(/existe/)
   })
 
   it('normaliza los módulos: no permite módulos admin-only en usuarios', async () => {

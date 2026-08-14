@@ -1,5 +1,5 @@
 import { requireModule } from '@/server/auth/dal'
-import { repos } from '@/server/repo/drizzle'
+import { repos } from '@/server/repo'
 import { DocumentoService } from '@/server/services/documento.service'
 import { DocumentosClient } from '@/components/documentos/documentos-client'
 
