@@ -1,5 +1,6 @@
 import type { Repos } from './interface'
 import { sqliteRepos } from './drivers/sqlite'
+import { firestoreRepos } from './drivers/firestore'
 
 export type { Repos }
 export {
@@ -23,11 +24,13 @@ type DriverName = 'sqlite' | 'mysql' | 'mssql' | 'firestore' | 'mongodb'
 //   sqlite    -> Drizzle sqlite-core + @libsql/client  (drivers/sqlite.ts)  ✅
 //   mysql     -> Drizzle mysql-core + mysql2            (drivers/mysql.ts)  🚧
 //   mssql     -> Drizzle mssql-core + mssql             (drivers/mssql.ts)  🚧
-//   firestore -> SDK de Firebase                        (drivers/firestore.ts) 🚧
+//   firestore -> SDK de Firebase                        (drivers/firestore.ts) ✅
 //   mongodb   -> driver oficial de MongoDB              (drivers/mongodb.ts)  🚧
 //
 // Las migraciones SQL en drizzle/*.sql son específicas de SQLite. Para otros
 // motores usa drizzle-kit generate/push (MySQL/MSSQL) o el esquema del motor.
+// Firestore no requiere migraciones: el esquema se define en el propio driver
+// (colecciones + doc-ids naturales) y las reglas de seguridad en firestore.rules.
 const DRIVERS: Record<DriverName, () => Repos> = {
   sqlite: () => sqliteRepos,
   mysql: () => {
@@ -36,9 +39,7 @@ const DRIVERS: Record<DriverName, () => Repos> = {
   mssql: () => {
     throw new Error('Driver "mssql" no implementado aún. Implementa Repos en src/server/repo/drivers/mssql.ts y regístralo aquí.')
   },
-  firestore: () => {
-    throw new Error('Driver "firestore" no implementado aún. Implementa Repos en src/server/repo/drivers/firestore.ts y regístralo aquí.')
-  },
+  firestore: () => firestoreRepos,
   mongodb: () => {
     throw new Error('Driver "mongodb" no implementado aún. Implementa Repos en src/server/repo/drivers/mongodb.ts y regístralo aquí.')
   },

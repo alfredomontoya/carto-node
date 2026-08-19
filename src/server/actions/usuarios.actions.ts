@@ -16,11 +16,11 @@ const userSchema = z.object({
   role: z.enum(['admin', 'user', 'guest']),
   active: z.boolean().optional(),
   modules: z.array(z.string()).default([]),
-  areaId: z.number().nullable().optional(),
-  puestoId: z.number().nullable().optional(),
+  areaId: z.string().nullable().optional(),
+  puestoId: z.string().nullable().optional(),
 })
 
-export async function crearUsuarioAction(input: z.infer<typeof userSchema>): Promise<ActionResult<{ id: number }>> {
+export async function crearUsuarioAction(input: z.infer<typeof userSchema>): Promise<ActionResult<{ id: string }>> {
   try {
     await requireModule('usuarios')
     const parsed = userSchema.safeParse(input)
@@ -45,9 +45,9 @@ export async function crearUsuarioAction(input: z.infer<typeof userSchema>): Pro
 }
 
 export async function actualizarUsuarioAction(
-  id: number,
+  id: string,
   input: z.infer<typeof userSchema>,
-): Promise<ActionResult<{ id: number }>> {
+): Promise<ActionResult<{ id: string }>> {
   try {
     const actor = await requireModule('usuarios')
     if (actor.id === id && input.active === false) {
@@ -71,7 +71,7 @@ export async function actualizarUsuarioAction(
   }
 }
 
-export async function resetPasswordAction(id: number, password: string): Promise<ActionResult<{ id: number }>> {
+export async function resetPasswordAction(id: string, password: string): Promise<ActionResult<{ id: string }>> {
   try {
     await requireModule('usuarios')
     if (!password || password.length < 6) {
@@ -85,7 +85,7 @@ export async function resetPasswordAction(id: number, password: string): Promise
   }
 }
 
-export async function eliminarUsuarioAction(id: number): Promise<ActionResult<{ id: number }>> {
+export async function eliminarUsuarioAction(id: string): Promise<ActionResult<{ id: string }>> {
   try {
     const actor = await requireModule('usuarios')
     await usuarios.eliminar(id, actor.id)
@@ -96,7 +96,7 @@ export async function eliminarUsuarioAction(id: number): Promise<ActionResult<{ 
   }
 }
 
-export async function asignarAreaAction(userId: number, areaId: number, puestoId: number | null): Promise<ActionResult<void>> {
+export async function asignarAreaAction(userId: string, areaId: string, puestoId: string | null): Promise<ActionResult<void>> {
   try {
     const actor = await requireModule('usuarios')
     void actor

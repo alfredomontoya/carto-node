@@ -8,20 +8,20 @@ import type { ArchivoVirtual } from '@/server/services/storage.service'
 import { obtenerStorage } from '@/server/services/storage.service'
 
 export interface CreaDocumentoInput {
-  areaId: number
+  areaId: string
   tipo: TipoDocumento
   referencia: string
   descripcion?: string | null
-  destinatarioUserId?: number | null
+  destinatarioUserId?: string | null
   destinatarioTexto?: string | null
   fechaDocumento?: Date
   archivos?: ArchivoVirtual[]
 }
 
 export interface Actor {
-  id: number
+  id: string
   role: 'admin' | 'user' | 'guest'
-  areaId: number | null
+  areaId: string | null
 }
 
 export class DocumentoService {
@@ -90,7 +90,7 @@ export class DocumentoService {
     actor: Actor,
     filtros: {
       q?: string
-      areaId?: number
+      areaId?: string
       tipo?: TipoDocumento | ''
       year?: number | ''
       estado?: 'activo' | 'anulado' | 'todos'
@@ -112,13 +112,13 @@ export class DocumentoService {
     })
   }
 
-  async obtener(id: number): Promise<NonNullable<Awaited<ReturnType<Repos['documentos']['findByIdWithDetails']>>>> {
+  async obtener(id: string): Promise<NonNullable<Awaited<ReturnType<Repos['documentos']['findByIdWithDetails']>>>> {
     const data = await this.repos.documentos.findByIdWithDetails(id)
     if (!data) throw notFound('El documento no existe.')
     return data
   }
 
-  private async obtenerAutorizado(id: number, actor: Actor): Promise<Documento> {
+  private async obtenerAutorizado(id: string, actor: Actor): Promise<Documento> {
     const doc = await this.repos.documentos.findById(id)
     if (!doc) throw notFound('El documento no existe.')
     if (doc.estado === 'anulado') {
@@ -131,9 +131,9 @@ export class DocumentoService {
   }
 
   async actualizar(
-    id: number,
+    id: string,
     actor: Actor,
-    datos: { referencia: string; descripcion?: string | null; destinatarioUserId?: number | null; destinatarioTexto?: string | null },
+    datos: { referencia: string; descripcion?: string | null; destinatarioUserId?: string | null; destinatarioTexto?: string | null },
   ): Promise<Documento> {
     const doc = await this.obtenerAutorizado(id, actor)
     if (!datos.referencia.trim()) throw conflict('La referencia es obligatoria.')
@@ -147,12 +147,12 @@ export class DocumentoService {
   }
 
   /** Anula el documento: pasa a estado `anulado` (consultable en histórico) y su número no se reutiliza. */
-  async anular(id: number, actor: Actor): Promise<void> {
+  async anular(id: string, actor: Actor): Promise<void> {
     await this.obtenerAutorizado(id, actor)
     await this.repos.documentos.anular(id)
   }
 
-  async crearArchivo(id: number, actor: Actor, archivo: ArchivoVirtual): Promise<void> {
+  async crearArchivo(id: string, actor: Actor, archivo: ArchivoVirtual): Promise<void> {
     await this.obtenerAutorizado(id, actor)
     const storage = obtenerStorage()
     const guardado = await storage.guardar(archivo)
@@ -165,7 +165,7 @@ export class DocumentoService {
     })
   }
 
-  async eliminarArchivo(documentoId: number, fileId: number, actor: Actor): Promise<void> {
+  async eliminarArchivo(documentoId: string, fileId: string, actor: Actor): Promise<void> {
     await this.obtenerAutorizado(documentoId, actor)
     const file = await this.repos.files.findById(fileId)
     if (!file || file.documentoId !== documentoId) throw notFound('El archivo no existe.')
@@ -175,8 +175,8 @@ export class DocumentoService {
 
   async resumenActor(actor: Actor) {
     const mios = await this.repos.documentos.list({ soloMios: true, userId: actor.id, page: 1, perPage: 1 })
-    const ci = await this.contadores.obtenerContador(actor.areaId ?? 0, 'ci').catch(() => null)
-    const of = await this.contadores.obtenerContador(actor.areaId ?? 0, 'of').catch(() => null)
+    const ci = await this.contadores.obtenerContador(actor.areaId ?? '', 'ci').catch(() => null)
+    const of = await this.contadores.obtenerContador(actor.areaId ?? '', 'of').catch(() => null)
     return {
       misDocumentos: mios.total,
       contadorCi: ci,

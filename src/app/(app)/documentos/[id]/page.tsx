@@ -16,7 +16,7 @@ const documentoService = new DocumentoService(repos)
 export default async function DocumentoDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const actor = await requireModule('documentos')
   const { id } = await params
-  const data = await documentoService.obtener(Number(id)).catch(() => null)
+  const data = await documentoService.obtener(id).catch(() => null)
   if (!data) notFound()
 
   const { documento, areaSigla, areaName, creadorName, destinatarioName, files } = data

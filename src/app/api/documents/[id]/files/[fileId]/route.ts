@@ -9,11 +9,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
   const { id, fileId } = await params
-  const documento = await repos.documentos.findById(Number(id))
+  const documento = await repos.documentos.findById(id)
   if (!documento || documento.estado === 'anulado') {
     return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
   }
-  const file = await repos.files.findById(Number(fileId))
+  const file = await repos.files.findById(fileId)
   if (!file || file.documentoId !== documento.id) {
     return NextResponse.json({ error: 'No encontrado' }, { status: 404 })
   }

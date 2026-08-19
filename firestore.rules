@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// Todo el acceso se hace con el Admin SDK desde el servidor (Cloud Functions),
+// que ignora estas reglas. Se bloquea el acceso directo de clientes.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -10,7 +10,7 @@ const { DocumentoService } = await import('@/server/services/documento.service')
 
 const docs = new DocumentoService(repos)
 
-async function crearArea(nombre: string, sigla: string, parentId: number | null = null) {
+async function crearArea(nombre: string, sigla: string, parentId: string | null = null) {
   return repos.areas.create({ name: nombre, sigla, parentId, numeracionMode: 'propia', reiniciaAnualmente: true, active: true })
 }
 
@@ -18,7 +18,7 @@ async function crearUser(email: string, role: 'admin' | 'user' | 'guest' = 'user
   return repos.users.create({ name: email.split('@')[0], email, passwordHash: bcrypt.hashSync('x', 4), role, active: true })
 }
 
-function actor(id: number, role: 'admin' | 'user' | 'guest', areaId: number | null) {
+function actor(id: string, role: 'admin' | 'user' | 'guest', areaId: string | null) {
   return { id, role, areaId }
 }
 

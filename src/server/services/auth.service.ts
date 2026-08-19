@@ -65,7 +65,7 @@ export class AuthService {
     return this.cargarSesion(session.userId)
   }
 
-  async cargarSesion(userId: number): Promise<SesionUsuario> {
+  async cargarSesion(userId: string): Promise<SesionUsuario> {
     const usuario = await this.repos.users.findByIdentifier(userId)
     if (!usuario) throw notFound('Usuario no encontrado.')
 
@@ -81,7 +81,7 @@ export class AuthService {
       asignacionActiva: asignacion
         ? {
             userAreaId: asignacion.userAreaId,
-            areaId: asignacion.areaId ?? 0,
+            areaId: asignacion.areaId ?? '',
             areaName: asignacion.areaName ?? '',
             areaSigla: asignacion.areaSigla ?? '',
             puestoId: asignacion.puestoId,

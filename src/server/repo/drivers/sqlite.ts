@@ -1,5 +1,6 @@
 import { and, asc, count, desc, eq, isNull, like, or, sql, type SQL } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
+import { randomUUID } from 'node:crypto'
 import { db } from '@/db/client'
 import {
   areas,
@@ -34,6 +35,10 @@ import type {
 
 const destUsers = alias(users, 'destinatario_users')
 
+function nuevoId(): string {
+  return randomUUID()
+}
+
 const usersRepo: UserRepo = {
   async findByEmail(email) {
     return (await db.select().from(users).where(eq(users.email, email)).get()) ?? null
@@ -44,11 +49,9 @@ const usersRepo: UserRepo = {
   },
 
   async findByIdentifier(id) {
-    const numeric = typeof id === 'number' || (typeof id === 'string' && id.trim() !== '' && !Number.isNaN(Number(id)))
     const user =
-      numeric
-        ? (await db.select().from(users).where(eq(users.id, Number(id))).get()) ?? null
-        : (await db.select().from(users).where(eq(users.email, String(id))).get()) ?? null
+      (await db.select().from(users).where(eq(users.id, String(id))).get()) ??
+      (await db.select().from(users).where(eq(users.email, String(id).toLowerCase())).get())
     if (!user) return null
     const assignments = await db
       .select()
@@ -64,9 +67,9 @@ const usersRepo: UserRepo = {
           .select()
           .from(users)
           .where(or(like(users.name, `%${search}%`), like(users.email, `%${search}%`)))
-          .orderBy(desc(users.id))
+          .orderBy(desc(users.createdAt))
           .all()
-      : await db.select().from(users).orderBy(desc(users.id)).all()
+      : await db.select().from(users).orderBy(desc(users.createdAt)).all()
     const assignments = await db.select().from(moduleAssignments).all()
     return rows.map((u) => ({
       ...u,
@@ -75,7 +78,7 @@ const usersRepo: UserRepo = {
   },
 
   async create(data: NewUser) {
-    return (await db.insert(users).values(data).returning())[0]
+    return (await db.insert(users).values({ ...data, id: nuevoId() }).returning())[0]
   },
 
   async update(id, data) {
@@ -107,7 +110,7 @@ const usersRepo: UserRepo = {
     if (modules.length > 0) {
       await db
         .insert(moduleAssignments)
-        .values(modules.map((m) => ({ userId, module: m })))
+        .values(modules.map((m) => ({ id: nuevoId(), userId, module: m })))
         .run()
     }
   },
@@ -146,6 +149,7 @@ const usersRepo: UserRepo = {
       await db
         .insert(userAreas)
         .values({
+          id: nuevoId(),
           userId: data.userId,
           areaId: data.areaId,
           puestoId: data.puestoId,
@@ -182,7 +186,7 @@ const usersRepo: UserRepo = {
       }
       await tx
         .insert(userAreas)
-        .values({ userId, areaId, puestoId, fechaInicio: new Date(), activa: true })
+        .values({ id: nuevoId(), userId, areaId, puestoId, fechaInicio: new Date(), activa: true })
         .run()
     })
   },
@@ -220,7 +224,7 @@ const areasRepo: AreaRepo = {
   },
 
   async create(data: Partial<NewArea>) {
-    return (await db.insert(areas).values(data as NewArea).returning())[0]
+    return (await db.insert(areas).values({ ...data, id: nuevoId() } as NewArea).returning())[0]
   },
 
   async update(id, data) {
@@ -256,7 +260,7 @@ const areasRepo: AreaRepo = {
   },
 
   async createPuesto(areaId, data: Partial<NewPuesto>) {
-    return (await db.insert(puestos).values({ ...data, areaId } as NewPuesto).returning())[0]
+    return (await db.insert(puestos).values({ ...data, areaId, id: nuevoId() } as NewPuesto).returning())[0]
   },
 
   async updatePuesto(id, data) {
@@ -295,7 +299,7 @@ const contadoresRepo: ContadorRepo = {
     return (
       await db
         .insert(contadores)
-        .values({ areaOwnerId, tipo, year: year ?? null })
+        .values({ id: nuevoId(), areaOwnerId, tipo, year: year ?? null })
         .returning()
     )[0]
   },
@@ -336,7 +340,7 @@ const contadoresRepo: ContadorRepo = {
 
 const documentoRepo: DocumentoRepo = {
   async create(data: NewDocumento) {
-    return (await db.insert(documentos).values(data).returning())[0]
+    return (await db.insert(documentos).values({ ...data, id: nuevoId() }).returning())[0]
   },
 
   async findById(id) {
@@ -387,7 +391,7 @@ const documentoRepo: DocumentoRepo = {
       .innerJoin(users, eq(users.id, documentos.creadoPor))
       .leftJoin(destUsers, eq(destUsers.id, documentos.destinatarioUserId))
       .where(where)
-      .orderBy(desc(documentos.id))
+      .orderBy(desc(documentos.createdAt))
       .limit(perPage)
       .offset((page - 1) * perPage)
       .all()
@@ -455,7 +459,7 @@ const documentoRepo: DocumentoRepo = {
 
 const filesRepo: DocumentFileRepo = {
   async create(data) {
-    return (await db.insert(documentFiles).values(data).returning())[0]
+    return (await db.insert(documentFiles).values({ ...data, id: nuevoId() }).returning())[0]
   },
   async delete(id) {
     await db.delete(documentFiles).where(eq(documentFiles.id, id)).run()
@@ -491,10 +495,10 @@ const sessionsRepo: SessionRepo = {
 
 const auditRepo: AuditRepo = {
   async createReset(data) {
-    return (await db.insert(resets).values(data).returning())[0]
+    return (await db.insert(resets).values({ ...data, id: nuevoId() }).returning())[0]
   },
   async resetsByContador(contadorId) {
-    return db.select().from(resets).where(eq(resets.contadorId, contadorId)).orderBy(desc(resets.id)).all()
+    return db.select().from(resets).where(eq(resets.contadorId, contadorId)).orderBy(desc(resets.createdAt)).all()
   },
   async countRecentAttempts(email, ip, seconds) {
     const cutoff = new Date(Date.now() - seconds * 1000)
@@ -505,7 +509,7 @@ const auditRepo: AuditRepo = {
     return (await db.select({ c: count() }).from(loginAttempts).where(where).get())?.c ?? 0
   },
   async recordAttempt(data) {
-    await db.insert(loginAttempts).values(data).run()
+    await db.insert(loginAttempts).values({ ...data, id: nuevoId() }).run()
   },
 }
 

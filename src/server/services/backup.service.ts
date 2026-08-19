@@ -7,7 +7,7 @@ import {
   rmSync,
   statSync,
 } from 'node:fs'
-import { join, resolve, extname } from 'node:path'
+import { dirname, join, resolve, extname } from 'node:path'
 import os from 'node:os'
 import { ZipArchive } from 'archiver'
 import { obtenerDumper } from '@/server/backup'
@@ -38,7 +38,7 @@ export class BackupService {
   constructor(private readonly repos: Repos) {}
 
   private get backupDir(): string {
-    return resolve(process.env.BACKUP_DIR ?? './backups')
+    return resolve(/* turbopackIgnore: true */ process.env.BACKUP_DIR ?? './backups')
   }
 
   async obtenerConfig(): Promise<BackupConfig> {
@@ -64,6 +64,8 @@ export class BackupService {
   }
 
   async listarBackups(): Promise<BackupInfo[]> {
+    const cloud = obtenerAlmacenamientoNube()
+    if (cloud) return cloud.listar()
     const dir = this.backupDir
     if (!existsSync(dir)) return []
     return readdirSync(dir)
@@ -77,10 +79,9 @@ export class BackupService {
   }
 
   async crearBackup(ahora = new Date()): Promise<BackupEstado> {
-    mkdirSync(this.backupDir, { recursive: true })
     const tmpDir = mkdtempSync(join(os.tmpdir(), 'carto-bk-'))
     const nombre = `carto-${formatearFecha(ahora)}.zip`
-    const rutaZip = join(this.backupDir, nombre)
+    const cloud = obtenerAlmacenamientoNube()
 
     try {
       const dumper = obtenerDumper()
@@ -88,9 +89,12 @@ export class BackupService {
       const dumpPath = join(tmpDir, `database${ext}`)
       await dumper.dump(dumpPath)
 
-      await this.crearZip(rutaZip, tmpDir, dumpPath)
+      // En serverless /tmp es efímero: el zip se sube al bucket. En local se
+      // conserva en BACKUP_DIR.
+      const rutaZip = cloud ? join(tmpDir, nombre) : join(this.backupDir, nombre)
+      mkdirSync(dirname(rutaZip), { recursive: true })
+      await this.crearZip(rutaZip, dumpPath)
 
-      const cloud = obtenerAlmacenamientoNube()
       if (cloud) await cloud.subir(rutaZip, nombre)
 
       await this.aplicarRetencion()
@@ -108,7 +112,7 @@ export class BackupService {
     }
   }
 
-  private async crearZip(rutaZip: string, tmpDir: string, dumpPath: string): Promise<void> {
+  private async crearZip(rutaZip: string, dumpPath: string): Promise<void> {
     const output = createWriteStream(rutaZip)
     const archive = new ZipArchive({ zlib: { level: 9 } })
 
@@ -119,8 +123,10 @@ export class BackupService {
       archive.pipe(output)
       archive.file(dumpPath, { name: `database${extname(dumpPath)}` })
 
-      const uploadDir = resolve(process.env.UPLOAD_DIR ?? './uploads')
-      if (existsSync(uploadDir)) {
+      // Los adjuntos locales solo existen en desarrollo; en producción viven en
+      // Cloud Storage (STORAGE_DRIVER=gcs) y no se empaquetan.
+      const uploadDir = resolve(/* turbopackIgnore: true */ process.env.UPLOAD_DIR ?? './uploads')
+      if (existsSync(/* turbopackIgnore: true */ uploadDir)) {
         archive.directory(uploadDir, 'uploads')
       } else {
         archive.append('', { name: 'uploads/README.txt' })
@@ -131,9 +137,17 @@ export class BackupService {
   }
 
   private async aplicarRetencion(): Promise<void> {
+    const limiteMs = Date.now() - (await this.retentionMs())
+    const cloud = obtenerAlmacenamientoNube()
+    if (cloud) {
+      const items = await cloud.listar()
+      for (const item of items) {
+        if (item.fecha.getTime() < limiteMs) await cloud.borrar(item.nombre)
+      }
+      return
+    }
     const dir = this.backupDir
     if (!existsSync(dir)) return
-    const limiteMs = Date.now() - (await this.retentionMs())
     for (const nombre of readdirSync(dir).filter((f) => f.endsWith('.zip'))) {
       const ruta = join(dir, nombre)
       try {

@@ -12,5 +12,10 @@ export default defineConfig({
     globals: true,
     include: ['src/**/*.test.{ts,tsx}'],
     isolate: true,
+    server: {
+      deps: {
+        external: ['firebase-admin', /@google-cloud/, /@grpc/, /google-gax/, /proto-loader/],
+      },
+    },
   },
 })

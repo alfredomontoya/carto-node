@@ -5,7 +5,7 @@ import type { Repos } from '@/server/repo/interface'
 
 export interface NodoArea extends Area {
   puestos: Puesto[]
-  heredasDe: { id: number; name: string; sigla: string } | null
+  heredasDe: { id: string; name: string; sigla: string } | null
   hijos: NodoArea[]
 }
 
@@ -14,7 +14,7 @@ export interface DatosArea {
   sigla: string
   description?: string | null
   active?: boolean
-  parentId?: number | null
+  parentId?: string | null
   numeracionMode: 'propia' | 'hereda'
   reiniciaAnualmente: boolean
 }
@@ -52,7 +52,7 @@ export class AreaService {
     return area
   }
 
-  async actualizar(id: number, datos: Partial<DatosArea>): Promise<Area> {
+  async actualizar(id: string, datos: Partial<DatosArea>): Promise<Area> {
     const actual = await this.repos.areas.findById(id)
     if (!actual) throw notFound('El área no existe.')
 
@@ -79,7 +79,7 @@ export class AreaService {
     })
   }
 
-  private async ancestors(areaId: number): Promise<Area[]> {
+  private async ancestors(areaId: string): Promise<Area[]> {
     const all = await this.repos.areas.listAll()
     const byId = new Map(all.map((a) => [a.id, a]))
     const out: Area[] = []
@@ -96,7 +96,7 @@ export class AreaService {
     return out
   }
 
-  async eliminar(id: number): Promise<void> {
+  async eliminar(id: string): Promise<void> {
     const area = await this.repos.areas.findById(id)
     if (!area) throw notFound('El área no existe.')
 
@@ -118,14 +118,14 @@ export class AreaService {
   async obtenerArbol(): Promise<NodoArea[]> {
     const areas = await this.repos.areas.listAll()
     const puestos = await Promise.all(areas.map((a) => this.repos.areas.puestosByArea(a.id)))
-    const puestosPorArea = new Map<number, Puesto[]>()
+    const puestosPorArea = new Map<string, Puesto[]>()
     for (const p of puestos.flat()) {
       const list = puestosPorArea.get(p.areaId) ?? []
       list.push(p)
       puestosPorArea.set(p.areaId, list)
     }
 
-    const byId = new Map<number, NodoArea>()
+    const byId = new Map<string, NodoArea>()
     for (const a of areas) {
       byId.set(a.id, {
         ...a,
@@ -154,7 +154,7 @@ export class AreaService {
     return nodo
   }
 
-  async obtener(id: number): Promise<NodoArea | null> {
+  async obtener(id: string): Promise<NodoArea | null> {
     const area = await this.repos.areas.findById(id)
     if (!area) return null
     const puestos = await this.repos.areas.puestosByArea(id)
@@ -168,7 +168,7 @@ export class AreaService {
   }
 
   // ----- puestos -----
-  async crearPuesto(areaId: number, datos: { name: string; sigla: string; description?: string }): Promise<Puesto> {
+  async crearPuesto(areaId: string, datos: { name: string; sigla: string; description?: string }): Promise<Puesto> {
     const area = await this.repos.areas.findById(areaId)
     if (!area) throw notFound('El área no existe.')
     return this.repos.areas.createPuesto(areaId, {
@@ -179,7 +179,7 @@ export class AreaService {
     })
   }
 
-  async actualizarPuesto(areaId: number, puestoId: number, datos: Partial<{ name: string; sigla: string; description: string | null; active: boolean }>): Promise<Puesto> {
+  async actualizarPuesto(areaId: string, puestoId: string, datos: Partial<{ name: string; sigla: string; description: string | null; active: boolean }>): Promise<Puesto> {
     const puestos = await this.repos.areas.puestosByArea(areaId)
     const puesto = puestos.find((p) => p.id === puestoId)
     if (!puesto) throw notFound('El puesto no pertenece a esta área.')
@@ -189,7 +189,7 @@ export class AreaService {
     })
   }
 
-  async eliminarPuesto(areaId: number, puestoId: number): Promise<void> {
+  async eliminarPuesto(areaId: string, puestoId: string): Promise<void> {
     const puestos = await this.repos.areas.puestosByArea(areaId)
     if (!puestos.some((p) => p.id === puestoId)) throw notFound('El puesto no pertenece a esta área.')
     await this.repos.areas.deletePuesto(puestoId)

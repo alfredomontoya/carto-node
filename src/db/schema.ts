@@ -1,4 +1,5 @@
 import { sql } from 'drizzle-orm'
+import { randomUUID } from 'node:crypto'
 import {
   foreignKey,
   index,
@@ -9,7 +10,9 @@ import {
 } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
   name: text('name').notNull(),
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
@@ -23,8 +26,10 @@ export const users = sqliteTable('users', {
 export const moduleAssignments = sqliteTable(
   'module_assignments',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    userId: integer('user_id')
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     module: text('module', {
@@ -38,8 +43,10 @@ export const moduleAssignments = sqliteTable(
 export const areas = sqliteTable(
   'areas',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    parentId: integer('parent_id'),
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    parentId: text('parent_id'),
     name: text('name').notNull(),
     sigla: text('sigla').notNull().unique(),
     description: text('description'),
@@ -62,8 +69,10 @@ export const areas = sqliteTable(
 export const puestos = sqliteTable(
   'puestos',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    areaId: integer('area_id')
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    areaId: text('area_id')
       .notNull()
       .references(() => areas.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
@@ -79,14 +88,16 @@ export const puestos = sqliteTable(
 export const userAreas = sqliteTable(
   'user_areas',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    userId: integer('user_id')
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    userId: text('user_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    areaId: integer('area_id')
+    areaId: text('area_id')
       .notNull()
       .references(() => areas.id, { onDelete: 'restrict' }),
-    puestoId: integer('puesto_id').references(() => puestos.id, { onDelete: 'set null' }),
+    puestoId: text('puesto_id').references(() => puestos.id, { onDelete: 'set null' }),
     fechaInicio: integer('fecha_inicio', { mode: 'timestamp_ms' }).notNull(),
     fechaFin: integer('fecha_fin', { mode: 'timestamp_ms' }),
     activa: integer('activa', { mode: 'boolean' }).notNull().default(true),
@@ -104,8 +115,10 @@ export const userAreas = sqliteTable(
 export const contadores = sqliteTable(
   'contadores',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    areaOwnerId: integer('area_owner_id')
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    areaOwnerId: text('area_owner_id')
       .notNull()
       .references(() => areas.id, { onDelete: 'cascade' }),
     tipo: text('tipo', { enum: ['ci', 'of'] }).notNull(),
@@ -123,11 +136,13 @@ export const contadores = sqliteTable(
 export const documentos = sqliteTable(
   'documentos',
   {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    areaId: integer('area_id')
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+    areaId: text('area_id')
       .notNull()
       .references(() => areas.id, { onDelete: 'restrict' }),
-    contadorId: integer('contador_id')
+    contadorId: text('contador_id')
       .notNull()
       .references(() => contadores.id, { onDelete: 'restrict' }),
     tipo: text('tipo', { enum: ['ci', 'of'] }).notNull(),
@@ -137,12 +152,12 @@ export const documentos = sqliteTable(
     nroCompleto: text('nro_completo').notNull(),
     referencia: text('referencia').notNull(),
     descripcion: text('descripcion'),
-    destinatarioUserId: integer('destinatario_user_id').references(() => users.id, {
+    destinatarioUserId: text('destinatario_user_id').references(() => users.id, {
       onDelete: 'set null',
     }),
     destinatarioTexto: text('destinatario_texto'),
     fechaDocumento: integer('fecha_documento', { mode: 'timestamp_ms' }).notNull(),
-    creadoPor: integer('creado_por')
+    creadoPor: text('creado_por')
       .notNull()
       .references(() => users.id, { onDelete: 'restrict' }),
     estado: text('estado', { enum: ['activo', 'anulado'] }).notNull().default('activo'),
@@ -162,8 +177,10 @@ export const documentos = sqliteTable(
 )
 
 export const documentFiles = sqliteTable('document_files', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  documentoId: integer('documento_id')
+  id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+  documentoId: text('documento_id')
     .notNull()
     .references(() => documentos.id, { onDelete: 'cascade' }),
   nombreOriginal: text('nombre_original').notNull(),
@@ -174,11 +191,13 @@ export const documentFiles = sqliteTable('document_files', {
 })
 
 export const resets = sqliteTable('resets', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  contadorId: integer('contador_id')
+  id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+  contadorId: text('contador_id')
     .notNull()
     .references(() => contadores.id, { onDelete: 'cascade' }),
-  realizadoPor: integer('realizado_por')
+  realizadoPor: text('realizado_por')
     .notNull()
     .references(() => users.id, { onDelete: 'restrict' }),
   glosa: text('glosa').notNull(),
@@ -188,8 +207,10 @@ export const resets = sqliteTable('resets', {
 })
 
 export const sessions = sqliteTable('sessions', {
-  id: text('id').primaryKey(),
-  userId: integer('user_id')
+  id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
+  userId: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
   expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
@@ -198,7 +219,9 @@ export const sessions = sqliteTable('sessions', {
 })
 
 export const loginAttempts = sqliteTable('login_attempts', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+  id: text('id')
+      .primaryKey()
+      .$defaultFn(() => randomUUID()),
   email: text('email'),
   ip: text('ip').notNull(),
   success: integer('success', { mode: 'boolean' }).notNull().default(false),

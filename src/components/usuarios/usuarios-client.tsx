@@ -21,23 +21,23 @@ import {
 } from '@/server/actions/usuarios.actions'
 
 interface UsuarioRow {
-  id: number
+  id: string
   name: string
   email: string
   role: 'admin' | 'user' | 'guest'
   active: boolean
   moduleAssignments: { module: string }[]
   asignacionActiva: {
-    areaId: number | null
+    areaId: string | null
     areaName: string | null
     areaSigla: string | null
-    puestoId: number | null
+    puestoId: string | null
     puestoName: string | null
   } | null
 }
 
 interface FormState {
-  id: number | null
+  id: string | null
   name: string
   email: string
   password: string
@@ -68,18 +68,18 @@ export function UsuariosClient({
   puestosPorArea,
 }: {
   esAdmin: boolean
-  usuarioActivoId: number
+  usuarioActivoId: string
   dominio: string
   usuarios: UsuarioRow[]
-  areas: { id: number; name: string; sigla: string; active: boolean }[]
-  puestosPorArea: Record<number, { id: number; name: string; sigla: string }[]>
+  areas: { id: string; name: string; sigla: string; active: boolean }[]
+  puestosPorArea: Record<string, { id: string; name: string; sigla: string }[]>
 }) {
   const [editando, setEditando] = useState<FormState | null>(null)
-  const [reseteando, setReseteando] = useState<{ id: number; name: string } | null>(null)
+  const [reseteando, setReseteando] = useState<{ id: string; name: string } | null>(null)
   const [nuevaPass, setNuevaPass] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const inicial = (id: number): FormState | null => {
+  const inicial = (id: string): FormState | null => {
     const u = usuarios.find((x) => x.id === id)
     if (!u) return null
     return {
@@ -105,8 +105,8 @@ export function UsuariosClient({
       role: editando.role as 'admin' | 'user' | 'guest',
       active: editando.active,
       modules: editando.modules,
-      areaId: editando.areaId === 'none' ? null : Number(editando.areaId),
-      puestoId: editando.puestoId === 'none' ? null : Number(editando.puestoId),
+      areaId: editando.areaId === 'none' ? null : editando.areaId,
+      puestoId: editando.puestoId === 'none' ? null : editando.puestoId,
     }
     const res = editando.id ? await actualizarUsuarioAction(editando.id, payload) : await crearUsuarioAction(payload)
     setSaving(false)
@@ -130,7 +130,7 @@ export function UsuariosClient({
     }
   }
 
-  const eliminar = async (id: number, name: string) => {
+  const eliminar = async (id: string, name: string) => {
     if (!confirm(`¿Eliminar al usuario "${name}"?`)) return
     const res = await eliminarUsuarioAction(id)
     if (res.ok) toast.success('Usuario eliminado')
@@ -299,7 +299,7 @@ export function UsuariosClient({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">Sin puesto</SelectItem>
-                      {(puestosPorArea[editando.areaId === 'none' ? -1 : Number(editando.areaId)] ?? []).map((p) => (
+                      {(puestosPorArea[editando.areaId === 'none' ? 'none' : editando.areaId] ?? []).map((p) => (
                         <SelectItem key={p.id} value={String(p.id)}>
                           {p.name}
                         </SelectItem>

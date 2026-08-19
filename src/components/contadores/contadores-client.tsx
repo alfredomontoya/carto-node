@@ -14,20 +14,20 @@ import { reiniciarContadorAction } from '@/server/actions/contadores.actions'
 import { formatFecha } from '@/lib/format'
 
 type EstadoArea = {
-  area: { id: number; name: string; sigla: string; reiniciaAnualmente: boolean }
-  ci: { id: number; ultimoNumero: number; ciclo: number; year: number | null } | null
-  of: { id: number; ultimoNumero: number; ciclo: number; year: number | null } | null
+  area: { id: string; name: string; sigla: string; reiniciaAnualmente: boolean }
+  ci: { id: string; ultimoNumero: number; ciclo: number; year: number | null } | null
+  of: { id: string; ultimoNumero: number; ciclo: number; year: number | null } | null
 }
 
 type ResetRegistro = {
-  id: number
+  id: string
   areaName: string
   areaSigla: string
   tipo: 'ci' | 'of'
   glosa: string
   numeroAnterior: number
   numeroNuevo: number
-  realizadoPor: number
+  realizadoPor: string
   createdAt: Date
 }
 
@@ -40,7 +40,7 @@ export function ContadoresClient({
   estados: EstadoArea[]
   resets: ResetRegistro[]
 }) {
-  const [reiniciando, setReiniciando] = useState<{ areaId: number; areaName: string; tipo: 'ci' | 'of' } | null>(null)
+  const [reiniciando, setReiniciando] = useState<{ areaId: string; areaName: string; tipo: 'ci' | 'of' } | null>(null)
   const [glosa, setGlosa] = useState('')
   const [saving, setSaving] = useState(false)
 

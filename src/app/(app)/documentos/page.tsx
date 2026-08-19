@@ -19,7 +19,7 @@ export default async function DocumentosPage({
     q: typeof params.q === 'string' ? params.q : undefined,
     tipo: (params.tipo === 'ci' || params.tipo === 'of' ? params.tipo : '') as 'ci' | 'of' | '',
     year: params.year ? Number(params.year) : ('') as number | '',
-    areaId: params.areaId ? Number(params.areaId) : undefined,
+    areaId: params.areaId ? String(params.areaId) : undefined,
     soloMios: params.soloMios === '1',
   }
 

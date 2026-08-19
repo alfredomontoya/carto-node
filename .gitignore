@@ -45,3 +45,7 @@ next-env.d.ts
 /uploads
 
 /backups
+
+# firebase deploy (workspace y logs)
+/.firebase/
+/deploy.log

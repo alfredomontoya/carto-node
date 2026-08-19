@@ -10,7 +10,7 @@ export default async function UsuariosPage() {
   const actor = await requireModule('usuarios')
   const [lista, areas] = await Promise.all([usuarios.listar(), repos.areas.listAll()])
 
-  const puestosPorArea: Record<number, { id: number; name: string; sigla: string }[]> = {}
+  const puestosPorArea: Record<string, { id: string; name: string; sigla: string }[]> = {}
   for (const a of areas) {
     const puestos = await repos.areas.puestosByArea(a.id)
     puestosPorArea[a.id] = puestos.map((p) => ({ id: p.id, name: p.name, sigla: p.sigla }))

@@ -25,7 +25,7 @@ export default async function NuevoDocumentoPage() {
         }
       }),
     )
-  ).filter((x): x is { id: number; name: string; areaName: string | null } => x !== null)
+  ).filter((x): x is { id: string; name: string; areaName: string | null } => x !== null)
 
   return (
     <DocumentoForm

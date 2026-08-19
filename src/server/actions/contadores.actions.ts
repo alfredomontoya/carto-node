@@ -10,7 +10,7 @@ import { resultadoError, success, type ActionResult } from './helpers'
 const contadores = new ContadorService(repos)
 
 const reiniciarSchema = z.object({
-  areaId: z.number().int().positive(),
+  areaId: z.string(),
   tipo: z.enum(['ci', 'of']),
   glosa: z.string().min(3, 'La glosa debe tener al menos 3 caracteres.').trim(),
   force: z.boolean().default(false),
@@ -18,7 +18,7 @@ const reiniciarSchema = z.object({
 
 export async function reiniciarContadorAction(
   input: z.input<typeof reiniciarSchema>,
-): Promise<ActionResult<{ areaId: number; tipo: 'ci' | 'of' }>> {
+): Promise<ActionResult<{ areaId: string; tipo: 'ci' | 'of' }>> {
   try {
     const admin = await requireAdmin()
     const parsed = reiniciarSchema.safeParse(input)

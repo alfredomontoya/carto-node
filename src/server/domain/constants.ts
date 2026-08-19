@@ -60,17 +60,17 @@ export interface HorarioDisponibilidad {
 }
 
 export interface AsignacionActiva {
-  userAreaId: number
-  areaId: number
+  userAreaId: string
+  areaId: string | null
   areaName: string
   areaSigla: string
-  puestoId: number | null
+  puestoId: string | null
   puestoName: string | null
   areaEstado: 'activo' | 'inactivo'
 }
 
 export interface SesionUsuario {
-  id: number
+  id: string
   name: string
   email: string
   role: Rol

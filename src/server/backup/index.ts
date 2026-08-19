@@ -1,6 +1,7 @@
 import type { DatabaseDumper } from './interface'
 import { sqliteDumper } from './drivers/sqlite'
-import { firestoreDumper, mongodbDumper, mysqlDumper } from './drivers/stubs'
+import { firestoreDumper } from './drivers/firestore'
+import { mongodbDumper, mysqlDumper } from './drivers/stubs'
 
 export type { DatabaseDumper, CloudBackupStorage } from './interface'
 
@@ -10,7 +11,7 @@ type DriverName = 'sqlite' | 'mysql' | 'mssql' | 'firestore' | 'mongodb'
 //   sqlite    -> VACUUM INTO (snapshot consistente)               ✅
 //   mysql     -> mysqldump                                        🚧
 //   mssql     -> sqlcmd BACKUP DATABASE                           🚧
-//   firestore -> export de colecciones a JSON                     🚧
+//   firestore -> export de colecciones a JSON                     ✅
 //   mongodb   -> mongodump                                        🚧
 const DUMPERS: Record<DriverName, () => DatabaseDumper> = {
   sqlite: () => sqliteDumper,

@@ -12,8 +12,8 @@ export interface DatosUsuario {
   role: 'admin' | 'user' | 'guest'
   active?: boolean
   modules: string[]
-  areaId?: number | null
-  puestoId?: number | null
+  areaId?: string | null
+  puestoId?: string | null
 }
 
 export class UsuarioService {
@@ -29,7 +29,7 @@ export class UsuarioService {
     )
   }
 
-  async crear(datos: DatosUsuario): Promise<{ id: number }> {
+  async crear(datos: DatosUsuario): Promise<{ id: string }> {
     const email = this.resolverEmail(datos)
     this.validarDatos({ ...datos, email })
 
@@ -57,7 +57,7 @@ export class UsuarioService {
     return { id: usuario.id }
   }
 
-  async actualizar(id: number, datos: Partial<DatosUsuario>): Promise<void> {
+  async actualizar(id: string, datos: Partial<DatosUsuario>): Promise<void> {
     const usuario = await this.repos.users.findById(id)
     if (!usuario) throw notFound('El usuario no existe.')
 
@@ -92,7 +92,7 @@ export class UsuarioService {
     }
   }
 
-  async resetPassword(id: number, nuevaPassword: string): Promise<void> {
+  async resetPassword(id: string, nuevaPassword: string): Promise<void> {
     const usuario = await this.repos.users.findById(id)
     if (!usuario) throw notFound('El usuario no existe.')
     if (!nuevaPassword || nuevaPassword.length < 6) {
@@ -102,7 +102,7 @@ export class UsuarioService {
     await this.repos.sessions.deleteByUser(id)
   }
 
-  async eliminar(id: number, actorId: number): Promise<void> {
+  async eliminar(id: string, actorId: string): Promise<void> {
     if (id === actorId) throw conflict('No puedes eliminar tu propio usuario.')
     const usuario = await this.repos.users.findById(id)
     if (!usuario) throw notFound('El usuario no existe.')
@@ -118,13 +118,13 @@ export class UsuarioService {
     await this.repos.sessions.deleteByUser(id)
   }
 
-  async asignarArea(userId: number, areaId: number, puestoId: number | null): Promise<void> {
+  async asignarArea(userId: string, areaId: string, puestoId: string | null): Promise<void> {
     const usuario = await this.repos.users.findById(userId)
     if (!usuario) throw notFound('El usuario no existe.')
     await this.repos.users.setActiveAssignment(userId, areaId, puestoId)
   }
 
-  async historial(userId: number) {
+  async historial(userId: string) {
     return this.repos.users.userAreaHistory(userId)
   }
 

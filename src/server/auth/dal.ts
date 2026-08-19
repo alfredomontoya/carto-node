@@ -9,7 +9,7 @@ import { AuthService } from '@/server/services/auth.service'
 
 const auth = new AuthService(repos)
 
-export const SESSION_COOKIE = process.env.SESSION_COOKIE ?? 'carto_session'
+export const SESSION_COOKIE = process.env.SESSION_COOKIE ?? '__session'
 export const TEMA_COOKIE = 'carto_tema'
 
 export const getCurrentUser = cache(async (): Promise<SesionUsuario | null> => {

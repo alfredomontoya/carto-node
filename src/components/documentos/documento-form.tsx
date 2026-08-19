@@ -16,11 +16,11 @@ import { cn } from '@/lib/utils'
 import { crearDocumentoAction } from '@/server/actions/documentos.actions'
 import { formatoBytes } from '@/lib/format'
 
-type AreaOp = { id: number; name: string; sigla: string; active: boolean }
-type DestinoOp = { id: number; name: string; areaName: string | null }
+type AreaOp = { id: string; name: string; sigla: string; active: boolean }
+type DestinoOp = { id: string; name: string; areaName: string | null }
 
 interface Creado {
-  id: number
+  id: string
   nroCompleto: string
   numero: number
   year: number
@@ -37,7 +37,7 @@ export function DocumentoForm({
   maxSizeMB,
 }: {
   areasEmitibles: AreaOp[]
-  areaInicial: number | null
+  areaInicial: string | null
   destinatarios: DestinoOp[]
   maxFiles: number
   maxSizeMB: number
@@ -98,11 +98,11 @@ export function DocumentoForm({
 
     setEnviando(true)
     const res = await crearDocumentoAction({
-      areaId: Number(areaId),
+      areaId,
       tipo,
       referencia,
       descripcion: descripcion || null,
-      destinatarioUserId: modoDestino === 'usuario' && destinatarioUsuario ? Number(destinatarioUsuario) : null,
+      destinatarioUserId: modoDestino === 'usuario' && destinatarioUsuario ? destinatarioUsuario : null,
       destinatarioTexto: modoDestino === 'texto' ? destinatarioTexto : null,
       fechaDocumento: fecha,
       archivos: files,

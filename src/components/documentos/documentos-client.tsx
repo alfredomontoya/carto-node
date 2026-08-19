@@ -14,7 +14,7 @@ import { eliminarDocumentoAction } from '@/server/actions/documentos.actions'
 import { formatFecha } from '@/lib/format'
 
 type Col = {
-  id: number
+  id: string
   nroCompleto: string
   referencia: string
   tipo: TipoDocumento
@@ -26,8 +26,8 @@ type Col = {
   creadorName: string
   destinatarioName: string | null
   destinatarioTexto: string | null
-  creadoPor: number
-  files?: { id: number; nombreOriginal: string; mime: string; size: number }[]
+  creadoPor: string
+  files?: { id: string; nombreOriginal: string; mime: string; size: number }[]
 }
 
 export function DocumentosClient({
@@ -44,8 +44,8 @@ export function DocumentosClient({
   total: number
   page: number
   perPage: number
-  filtros: { q?: string; tipo: TipoDocumento | ''; year: number | ''; areaId?: number; soloMios: boolean }
-  areas: { id: number; name: string; sigla: string }[]
+  filtros: { q?: string; tipo: TipoDocumento | ''; year: number | ''; areaId?: string; soloMios: boolean }
+  areas: { id: string; name: string; sigla: string }[]
   anios: number[]
   esGuest: boolean
 }) {
@@ -55,7 +55,7 @@ export function DocumentosClient({
   const totalPages = Math.max(1, Math.ceil(total / perPage))
 
   const ir = (path: string) => router.push(path)
-  const del = async (id: number) => {
+  const del = async (id: string) => {
     if (!confirm('¿Eliminar este documento?') ) return
     const res = await eliminarDocumentoAction(id)
     if (res.ok) {

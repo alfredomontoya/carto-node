@@ -14,12 +14,12 @@ const areaSchema = z.object({
   sigla: z.string().min(2, 'La sigla es obligatoria (mín. 2 caracteres).').trim().transform((s) => s.toUpperCase()),
   description: z.string().optional().nullable(),
   active: z.boolean().optional().default(true),
-  parentId: z.number().nullable().optional(),
+  parentId: z.string().nullable().optional(),
   numeracionMode: z.enum(['propia', 'hereda']),
   reiniciaAnualmente: z.boolean().optional().default(true),
 })
 
-export async function crearAreaAction(input: z.infer<typeof areaSchema>): Promise<ActionResult<{ id: number; name: string }>> {
+export async function crearAreaAction(input: z.infer<typeof areaSchema>): Promise<ActionResult<{ id: string; name: string }>> {
   try {
     const actor = await requireModule('areas')
     const parsed = areaSchema.safeParse(input)
@@ -38,7 +38,7 @@ export async function crearAreaAction(input: z.infer<typeof areaSchema>): Promis
   }
 }
 
-export async function actualizarAreaAction(id: number, input: z.infer<typeof areaSchema>): Promise<ActionResult<{ id: number; name: string }>> {
+export async function actualizarAreaAction(id: string, input: z.infer<typeof areaSchema>): Promise<ActionResult<{ id: string; name: string }>> {
   try {
     const actor = await requireModule('areas')
     const parsed = areaSchema.safeParse(input)
@@ -56,7 +56,7 @@ export async function actualizarAreaAction(id: number, input: z.infer<typeof are
   }
 }
 
-export async function eliminarAreaAction(id: number): Promise<ActionResult<{ id: number }>> {
+export async function eliminarAreaAction(id: string): Promise<ActionResult<{ id: string }>> {
   try {
     await requireModule('areas')
     const actor = await requireModule('areas')
@@ -76,7 +76,7 @@ const puestoSchema = z.object({
   active: z.boolean().optional(),
 })
 
-export async function crearPuestoAction(areaId: number, input: z.infer<typeof puestoSchema>): Promise<ActionResult<{ id: number }>> {
+export async function crearPuestoAction(areaId: string, input: z.infer<typeof puestoSchema>): Promise<ActionResult<{ id: string }>> {
   try {
     await requireModule('areas')
     const parsed = puestoSchema.safeParse(input)
@@ -93,7 +93,7 @@ export async function crearPuestoAction(areaId: number, input: z.infer<typeof pu
   }
 }
 
-export async function actualizarPuestoAction(areaId: number, puestoId: number, input: z.infer<typeof puestoSchema>): Promise<ActionResult<{ id: number }>> {
+export async function actualizarPuestoAction(areaId: string, puestoId: string, input: z.infer<typeof puestoSchema>): Promise<ActionResult<{ id: string }>> {
   try {
     await requireModule('areas')
     const parsed = puestoSchema.safeParse(input)
@@ -106,7 +106,7 @@ export async function actualizarPuestoAction(areaId: number, puestoId: number, i
   }
 }
 
-export async function eliminarPuestoAction(areaId: number, puestoId: number): Promise<ActionResult<{ id: number }>> {
+export async function eliminarPuestoAction(areaId: string, puestoId: string): Promise<ActionResult<{ id: string }>> {
   try {
     await requireModule('areas')
     await area.eliminarPuesto(areaId, puestoId)

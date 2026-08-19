@@ -10,7 +10,7 @@ const { ContadorService } = await import('@/server/services/contador.service')
 
 const contadores = new ContadorService(repos)
 
-async function crearArea(nombre: string, sigla: string, parentId: number | null, modo: 'propia' | 'hereda') {
+async function crearArea(nombre: string, sigla: string, parentId: string | null, modo: 'propia' | 'hereda') {
   return repos.areas.create({ name: nombre, sigla, parentId, numeracionMode: modo, reiniciaAnualmente: true, active: true })
 }
 
@@ -111,14 +111,14 @@ describe('ContadorService', () => {
   })
 })
 
-async function repoContadorDe(areaOwnerId: number, tipo: 'ci' | 'of') {
+async function repoContadorDe(areaOwnerId: string, tipo: 'ci' | 'of') {
   const contador = await repos.contadores.findByKey(areaOwnerId, tipo, new Date().getFullYear())
   if (!contador) throw new Error('Contador no encontrado')
   return contador
 }
 
 /** Emite un número "de verdad": asigna el correlativo y crea el documento. */
-async function emitir(areaId: number, tipo: 'ci' | 'of', creadoPor: number) {
+async function emitir(areaId: string, tipo: 'ci' | 'of', creadoPor: string) {
   const n = await contadores.siguienteNumero(areaId, tipo)
   await repos.documentos.create({
     areaId,

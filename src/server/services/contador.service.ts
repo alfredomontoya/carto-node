@@ -7,8 +7,8 @@ export interface NumeroAsignado {
   numero: number
   year: number
   ciclo: number
-  contadorId: number
-  areaOwnerId: number
+  contadorId: string
+  areaOwnerId: string
   sigla: string
   nroCompleto: string
 }
@@ -18,8 +18,8 @@ export class ContadorService {
 
   /** Resuelve el área "dueña" de la secuencia.
    *  Sube por la cadena de padres mientras el área tenga numeracionMode = 'hereda'. */
-  async resolveAreaOwner(areaId: number): Promise<Area> {
-    const byId = new Map<number, Area>()
+  async resolveAreaOwner(areaId: string): Promise<Area> {
+    const byId = new Map<string, Area>()
     for (const a of await this.repos.areas.listAll()) byId.set(a.id, a)
 
     let current = byId.get(areaId)
@@ -46,7 +46,7 @@ export class ContadorService {
     return this.repos.contadores.create(owner.id, tipo, year)
   }
 
-  async obtenerContador(areaId: number, tipo: TipoDocumento): Promise<Contador> {
+  async obtenerContador(areaId: string, tipo: TipoDocumento): Promise<Contador> {
     const owner = await this.resolveAreaOwner(areaId)
     return this.getContador(owner, tipo)
   }
@@ -54,7 +54,7 @@ export class ContadorService {
   /** Devuelve el siguiente número atómicamente (transacción + incremento).
    *  El número se comparte con el dueño de la secuencia (área de numeración propia),
    *  pero la sigla usada en el formato es la del área emisora. */
-  async siguienteNumero(emisorAreaId: number, tipo: TipoDocumento): Promise<NumeroAsignado> {
+  async siguienteNumero(emisorAreaId: string, tipo: TipoDocumento): Promise<NumeroAsignado> {
     const [emisor, owner] = await Promise.all([
       this.repos.areas.findById(emisorAreaId),
       this.resolveAreaOwner(emisorAreaId),
@@ -80,10 +80,10 @@ export class ContadorService {
    *  Por defecto queda bloqueado si el año actual ya emitió números para el área dueña
    *  (o para áreas que numeran como ella); con `force` se reinicia igual conservando los documentos. */
   async reiniciar(
-    areaId: number,
+    areaId: string,
     tipo: TipoDocumento,
     glosa: string,
-    realizadoPor: number,
+    realizadoPor: string,
     force = false,
   ): Promise<Contador> {
     if (!glosa || glosa.trim().length < 3) {
@@ -113,7 +113,7 @@ export class ContadorService {
     return nuevo
   }
 
-  async estado(areaId: number, tipo: TipoDocumento): Promise<{ contador: Contador; areaOwner: Area; tipo: TipoDocumento }> {
+  async estado(areaId: string, tipo: TipoDocumento): Promise<{ contador: Contador; areaOwner: Area; tipo: TipoDocumento }> {
     const owner = await this.resolveAreaOwner(areaId)
     const contador = await this.getContador(owner, tipo)
     return { contador, areaOwner: owner, tipo }
@@ -121,7 +121,7 @@ export class ContadorService {
 
   /** Estados de todos los contadores por área (módulo admin). */
   async listaEstados(): Promise<Array<{ area: Area; ci: Contador | null; of: Contador | null }>> {
-    const owners = new Map<number, Area>()
+    const owners = new Map<string, Area>()
     for (const area of await this.repos.areas.listAll()) {
       const owner = await this.resolveAreaOwner(area.id)
       owners.set(owner.id, owner)

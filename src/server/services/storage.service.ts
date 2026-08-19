@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join, resolve, extname } from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { storageBucket } from '@/server/firebase/admin'
 import { conflict } from '@/server/domain/errors'
 
 export interface ArchivoGuardado {
@@ -78,12 +79,51 @@ class LocalStorage implements FileStorage {
 
 const globalForStorage = globalThis as unknown as { __cartoStorage?: FileStorage }
 
+class GcsStorage implements FileStorage {
+  private get bucket() {
+    return storageBucket()
+  }
+
+  async guardar(archivo: ArchivoVirtual): Promise<ArchivoGuardado> {
+    validarArchivo(archivo, Number(process.env.MAX_UPLOAD_MB ?? 10))
+    const ext = extname(archivo.name).slice(0, 12) || ''
+    const nombre = `documentos/${randomUUID()}${ext}`
+    await this.bucket.file(nombre).save(archivo.data, {
+      contentType: archivo.mime,
+      metadata: { contentType: archivo.mime },
+      resumable: false,
+    })
+    return { path: nombre, size: archivo.data.byteLength }
+  }
+
+  async eliminar(path: string): Promise<void> {
+    try {
+      await this.bucket.file(path).delete()
+    } catch {
+      // ignorar si no existe
+    }
+  }
+
+  async leer(path: string): Promise<Buffer | null> {
+    try {
+      const [data] = await this.bucket.file(path).download()
+      return Buffer.from(data)
+    } catch {
+      return null
+    }
+  }
+}
+
 export function obtenerStorage(): FileStorage {
   const driver = process.env.STORAGE_DRIVER ?? 'local'
   if (driver === 'local') {
     globalForStorage.__cartoStorage ??= new LocalStorage(process.env.UPLOAD_DIR ?? './uploads')
     return globalForStorage.__cartoStorage
   }
-  // future adapters: cloudinary, s3, firebase — implementan la misma interfaz FileStorage
+  if (driver === 'gcs') {
+    globalForStorage.__cartoStorage ??= new GcsStorage()
+    return globalForStorage.__cartoStorage
+  }
+  // future adapters: cloudinary, s3 — implementan la misma interfaz FileStorage
   throw new Error(`Driver de almacenamiento no soportado todavía: ${driver}`)
 }

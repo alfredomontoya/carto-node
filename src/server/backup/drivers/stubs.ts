@@ -11,9 +11,3 @@ export const mongodbDumper: DatabaseDumper = {
     throw new Error('Dumper "mongodb" no implementado aún. Usa mongodump/export JSON y escríbelo en src/server/backup/drivers/mongodb.ts.')
   },
 }
-
-export const firestoreDumper: DatabaseDumper = {
-  async dump(): Promise<void> {
-    throw new Error('Dumper "firestore" no implementado aún. Exporta las colecciones a JSON y escríbelo en src/server/backup/drivers/firestore.ts.')
-  },
-}

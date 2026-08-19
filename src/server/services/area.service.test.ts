@@ -9,7 +9,7 @@ const { AreaService } = await import('@/server/services/area.service')
 
 const areas = new AreaService(repos)
 
-async function crearArea(nombre: string, sigla: string, parentId: number | null = null, modo: 'propia' | 'hereda' = 'propia') {
+async function crearArea(nombre: string, sigla: string, parentId: string | null = null, modo: 'propia' | 'hereda' = 'propia') {
   return repos.areas.create({ name: nombre, sigla, parentId, numeracionMode: modo, reiniciaAnualmente: true, active: true })
 }
 

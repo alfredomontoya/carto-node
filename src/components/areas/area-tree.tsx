@@ -20,10 +20,10 @@ import {
 import type { NodoArea } from '@/server/services/area.service'
 
 interface AreaPlana {
-  id: number
+  id: string
   name: string
   sigla: string
-  parentId: number | null
+  parentId: string | null
   numeracionMode: 'propia' | 'hereda'
   reiniciaAnualmente: boolean
   active: boolean
@@ -39,16 +39,16 @@ export function AreaTree({
   areas: AreaPlana[]
   esAdmin: boolean
 }) {
-  const [dialogo, setDialogo] = useState<{ abierto: boolean; area: AreaPlana | null; parentId: number | null }>({
+  const [dialogo, setDialogo] = useState<{ abierto: boolean; area: AreaPlana | null; parentId: string | null }>({
     abierto: false,
     area: null,
     parentId: null,
   })
 
-  const abrirCrear = (parentId: number | null) => setDialogo({ abierto: true, area: null, parentId })
+  const abrirCrear = (parentId: string | null) => setDialogo({ abierto: true, area: null, parentId })
   const abrirEditar = (area: AreaPlana) => setDialogo({ abierto: true, area, parentId: area.parentId })
 
-  const onEliminar = async (id: number, name: string) => {
+  const onEliminar = async (id: string, name: string) => {
     if (!confirm(`¿Eliminar el área "${name}"?`)) return
     const res = await eliminarAreaAction(id)
     if (res.ok) toast.success('Área eliminada')
@@ -104,9 +104,9 @@ function Nodo({
 }: {
   nodo: NodoArea
   esAdmin: boolean
-  onCrear: (parentId: number | null) => void
+  onCrear: (parentId: string | null) => void
   onEditar: (area: AreaPlana) => void
-  onEliminar: (id: number, name: string) => Promise<void>
+  onEliminar: (id: string, name: string) => Promise<void>
   depth: number
 }) {
   const [abierto, setAbierto] = useState(true)
@@ -196,7 +196,7 @@ function AreaDialog({
   opened: boolean
   onClose: () => void
   area: AreaPlana | null
-  parentId: number | null
+  parentId: string | null
   areas: AreaPlana[]
   esAdmin: boolean
 }) {
@@ -215,7 +215,7 @@ function AreaDialog({
       name,
       sigla,
       description: description || null,
-      parentId: parent ? Number(parent) : null,
+      parentId: parent && parent !== 'root' ? parent : null,
       numeracionMode: modo,
       reiniciaAnualmente: anual,
       active,

@@ -37,7 +37,7 @@ async function main() {
   }
 
   // ---------- Árbol de áreas ----------
-  const idPorSigla = new Map<string, number>()
+  const idPorSigla = new Map<string, string>()
   const admin = await repos.users.create({
     name: 'Administrador del Sistema',
     email: `admin@${DOMINIO_CORREO}`,
@@ -65,7 +65,7 @@ async function main() {
 
   // ---------- 10 usuarios con faker ----------
   const roles: Array<'admin' | 'user' | 'guest'> = ['user', 'user', 'user', 'user', 'user', 'user', 'user', 'user', 'guest', 'guest']
-  const usuarios: { id: number; name: string; areaId: number | null; puestoId: number | null }[] = []
+  const usuarios: { id: string; name: string; areaId: string | null; puestoId: string | null }[] = []
 
   for (let i = 0; i < 10; i++) {
     const role = roles[i]

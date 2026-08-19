@@ -10,11 +10,11 @@ import { resultadoError, success, type ActionResult } from './helpers'
 const docService = new DocumentoService(repos)
 
 const documentoSchema = z.object({
-  areaId: z.number().int().positive(),
+  areaId: z.string(),
   tipo: z.enum(['ci', 'of']),
   referencia: z.string().min(3, 'La referencia es obligatoria (mín. 3 caracteres).').trim(),
   descripcion: z.string().optional().nullable(),
-  destinatarioUserId: z.number().int().positive().nullable().optional(),
+  destinatarioUserId: z.string().nullable().optional(),
   destinatarioTexto: z.string().trim().optional().nullable(),
   fechaDocumento: z.string().optional().nullable(),
 })
@@ -23,7 +23,7 @@ export async function crearDocumentoAction(
   input: z.infer<typeof documentoSchema> & { archivos?: File[] },
 ): Promise<
   ActionResult<{
-    id: number
+    id: string
     nroCompleto: string
     numero: number
     year: number
@@ -85,14 +85,14 @@ export async function crearDocumentoAction(
 const editarSchema = z.object({
   referencia: z.string().min(3).trim(),
   descripcion: z.string().optional().nullable(),
-  destinatarioUserId: z.number().int().positive().nullable().optional(),
+  destinatarioUserId: z.string().nullable().optional(),
   destinatarioTexto: z.string().trim().optional().nullable(),
 })
 
 export async function actualizarDocumentoAction(
-  id: number,
+  id: string,
   input: z.infer<typeof editarSchema>,
-): Promise<ActionResult<{ id: number }>> {
+): Promise<ActionResult<{ id: string }>> {
   try {
     const actor = await requireModule('documentos')
     const parsed = editarSchema.safeParse(input)
@@ -110,7 +110,7 @@ export async function actualizarDocumentoAction(
   }
 }
 
-export async function eliminarDocumentoAction(id: number): Promise<ActionResult<{ id: number }>> {
+export async function eliminarDocumentoAction(id: string): Promise<ActionResult<{ id: string }>> {
   try {
     const actor = await requireModule('documentos')
     await docService.anular(id, { id: actor.id, role: actor.role, areaId: actor.asignacionActiva?.areaId ?? null })
